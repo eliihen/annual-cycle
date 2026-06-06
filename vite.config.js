@@ -15,6 +15,7 @@ function markdownPlugin() {
 }
 
 export default defineConfig({
+  base: '/annual-cycle/',
   plugins: [react(), markdownPlugin()],
   build: { outDir: 'dist' },
 });
