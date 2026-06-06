@@ -1,0 +1,34 @@
+name: Annual Cycle – Slack Notification
+
+on:
+  schedule:
+    # Every Monday at 07:00 UTC — sends weekly summary
+    # Also sends monthly summary on first Monday of month,
+    # and quarterly summary on first Monday of each quarter (Jan/Apr/Jul/Oct)
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+    inputs:
+      period:
+        description: 'Period to notify for (week, month, quarter, or all)'
+        required: false
+        default: 'all'
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Send Slack notification
+        run: node src/notify.js
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          NOTIFY_PERIOD: ${{ github.event.inputs.period || '' }}
