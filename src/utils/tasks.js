@@ -1,18 +1,16 @@
 const CAT_COLORS = {
-  økonomi: '#E74C3C', finans:   '#E74C3C',
-  hr:      '#3498DB', personal: '#3498DB',
-  strategi:'#27AE60', ledelse:  '#2980B9',
-  it:      '#8E44AD', teknologi:'#8E44AD',
-  marked:  '#E67E22', salg:     '#F39C12',
-  drift:   '#16A085', operasjon:'#1ABC9C',
-  compliance:'#C0392B', juridisk:'#C0392B',
-  kommunikasjon:'#D35400',
-  // English equivalents
-  finance: '#E74C3C', economics:'#E74C3C',
-  strategy:'#27AE60', management:'#2980B9',
-  technology:'#8E44AD', marketing:'#E67E22',
-  sales:   '#F39C12', operations:'#1ABC9C',
-  legal:   '#C0392B', communication:'#D35400',
+  finance:      '#E74C3C',
+  hr:           '#3498DB',
+  strategy:     '#27AE60',
+  management:   '#2980B9',
+  it:           '#8E44AD',
+  technology:   '#8E44AD',
+  marketing:    '#E67E22',
+  sales:        '#F39C12',
+  operations:   '#16A085',
+  compliance:   '#C0392B',
+  legal:        '#C0392B',
+  communication:'#D35400',
 };
 
 export function categoryColor(category, colorOverride) {
