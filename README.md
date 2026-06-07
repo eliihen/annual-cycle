@@ -2,7 +2,7 @@
 
 An interactive wheel visualization for recurring annual tasks. Create a GitHub repository with a `tasks/` folder, add two workflow files, and you get a live site on GitHub Pages — automatically rebuilt every time you update your tasks.
 
-![Annual Cycle wheel showing task arcs across months and weeks](https://placehold.co/900x500/EEF0F3/3A3F52?text=Annual+Cycle+Wheel)
+![Annual Cycle wheel showing task arcs across months and weeks](docs/image.png)
 
 ## Features
 
