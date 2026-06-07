@@ -363,12 +363,24 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
 
             const midAng  = (startDeg + endDeg) / 2;
             const midR    = (outer + inner) / 2;
-            const tp      = polar(midR, midAng);
-            const rot     = midAng + 90;
-            const maxChars = Math.max(4, Math.floor(spanDeg / 8));
+            // Arc length at the label radius (SVG units).  ~7 units per character
+            // at font-size 11 gives a comfortable fit with natural padding.
+            const arcLength = midR * spanDeg * Math.PI / 180;
+            const maxChars  = Math.max(4, Math.floor(arcLength / 7));
             const label   = task.title.length > maxChars
               ? task.title.slice(0, maxChars - 1) + '…'
               : task.title;
+
+            // textPath: bottom-half arcs (midAng 0–180 in SVG coords = lower half)
+            // must run counter-clockwise so text reads left-to-right.
+            const isBottom = midAng > 0 && midAng < 180;
+            const large    = spanDeg > 180 ? 1 : 0;
+            const pS = polar(midR, startDeg);
+            const pE = polar(midR, endDeg);
+            const textArcD = isBottom
+              ? `M ${f(pE.x)},${f(pE.y)} A ${midR},${midR} 0 ${large},0 ${f(pS.x)},${f(pS.y)}`
+              : `M ${f(pS.x)},${f(pS.y)} A ${midR},${midR} 0 ${large},1 ${f(pE.x)},${f(pE.y)}`;
+            const pathId = `tp-${task.id}`;
 
             return (
               <g key={task.id} onClick={() => onTaskClick(task.id)} style={{ cursor: 'pointer' }}>
@@ -379,15 +391,18 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
                 >
                   <title>{task.title} ({rangeLabel})</title>
                 </path>
-                {spanDeg >= 60 && (
-                  <text
-                    transform={`translate(${f(tp.x)},${f(tp.y)}) rotate(${f(rot)})`}
-                    textAnchor="middle" dominantBaseline="middle"
-                    fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600"
-                    fill="white" pointerEvents="none" opacity="0.95"
-                  >
-                    {label}
-                  </text>
+                {arcLength >= 50 && (
+                  <>
+                    <defs><path id={pathId} d={textArcD}/></defs>
+                    <text
+                      fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600"
+                      fill="white" pointerEvents="none" opacity="0.95" textAnchor="middle"
+                    >
+                      <textPath href={`#${pathId}`} startOffset="50%">
+                        {label}
+                      </textPath>
+                    </text>
+                  </>
                 )}
               </g>
             );
