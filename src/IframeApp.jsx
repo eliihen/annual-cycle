@@ -17,10 +17,10 @@ export default function IframeApp() {
 
   const handleTaskClick = id => {
     setActiveId(cur => cur === id ? null : id);
-    if (LINK_BASE) {
-      // Open the full site in the top frame.  target="_top" equivalent via JS.
-      window.top.location.href = LINK_BASE;
-    }
+    // Always navigate the top frame — breaks out of any iframe.
+    // Falls back to './' (same directory as the iframe file) when no explicit
+    // LINK_BASE was baked in at build time.
+    window.open(LINK_BASE || './', '_top');
   };
 
   return (
