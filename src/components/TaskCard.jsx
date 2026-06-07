@@ -1,17 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 const MONTHS_FULL = [
   'January','February','March','April','May','June',
   'July','August','September','October','November','December',
 ];
 
-export default function TaskCard({ task, active, onActivate }) {
-  const [open, setOpen] = useState(false);
-
-  const handleHeadClick = () => {
-    setOpen(o => !o);
-    onActivate(task.id);
-  };
+export default function TaskCard({ task, active, open, onActivate }) {
+  const handleHeadClick = () => onActivate(task.id);
 
   const when = task.unit === 'week'
     ? (task.start_week === task.end_week

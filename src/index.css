@@ -127,7 +127,15 @@ header p  { font-size: 13px; opacity: .6; }
 }
 
 /* ── Sidebar ── */
-.sidebar { display: flex; flex-direction: column; gap: 10px; }
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 110px);
+  overflow: hidden;
+}
 .sidebar-header {
   background: var(--card);
   border-radius: 12px;
@@ -135,10 +143,25 @@ header p  { font-size: 13px; opacity: .6; }
   box-shadow: 0 2px 8px rgba(0,0,0,.06);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
 }
-.sidebar-header h2 { font-size: 15px; font-weight: 700; }
+.sidebar-header h2 { font-size: 15px; font-weight: 700; flex: 1; }
 .sidebar-header span { font-size: 12px; color: var(--sub); }
+
+.year-select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.year-select:focus { border-color: var(--accent); }
 
 /* ── Filter bar ── */
 .filter-bar {
@@ -175,7 +198,14 @@ header p  { font-size: 13px; opacity: .6; }
 .cat-select:focus { border-color: var(--accent); }
 
 /* ── Task list ── */
-.task-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: calc(100vh - 260px); }
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+}
 
 /* ── Task cards ── */
 .task-card {
@@ -184,6 +214,8 @@ header p  { font-size: 13px; opacity: .6; }
   overflow: hidden;
   box-shadow: 0 1px 6px rgba(0,0,0,.06);
   transition: box-shadow .2s, transform .15s;
+  min-height: 58px;
+  flex-shrink: 0;
 }
 .task-card.active {
   box-shadow: 0 4px 20px rgba(0,0,0,.14);

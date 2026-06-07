@@ -2,25 +2,24 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 
 // ── Geometry constants ────────────────────────────────────────────────────────
 const SVG_SIZE   = 980;
-const CX         = SVG_SIZE / 2;   // 490
-const CY         = SVG_SIZE / 2;   // 490
+const CX         = SVG_SIZE / 2;
+const CY         = SVG_SIZE / 2;
 
-// Outer display ring (week date labels + month names)
+// Outer display ring (week dates + month names) — kept thin to maximise task area
 const WEEK_OUTER_R   = 460;  // outer edge of outer ring
-const WEEK_SPLIT_R   = 420;  // inner boundary of month-name sub-ring
-const OUTER_R        = 385;  // inner edge of outer ring / outer edge of task area
+const WEEK_SPLIT_R   = 442;  // month-name / week-date boundary  (18 px month band)
+const OUTER_R        = 422;  // inner edge of outer ring          (20 px week-date band)
 
-// Inner task area
-const LABEL_RING_INNER = 318;
-const TASK_OUTER_START = 308;
-const TASK_BAND        = 46;
+// Task area — starts right inside the outer ring
+const TASK_OUTER_START = 418; // outer edge of ring 0 (4 px gap from OUTER_R)
+const TASK_BAND        = 74;
 const TASK_GAP         = 4;
 const CENTER_R         = 95;
 const MAX_RINGS        = 4;
 
-// Text radii
-const WEEK_DATE_R  = (OUTER_R + WEEK_SPLIT_R) / 2;   // ≈ 402.5
-const MONTH_NAME_R = (WEEK_SPLIT_R + WEEK_OUTER_R) / 2; // ≈ 440
+// Text radii (midpoints of each sub-ring)
+const WEEK_DATE_R  = (OUTER_R + WEEK_SPLIT_R) / 2;    // ≈ 432
+const MONTH_NAME_R = (WEEK_SPLIT_R + WEEK_OUTER_R) / 2; // ≈ 451
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun',
                       'Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -86,7 +85,7 @@ function weekMonday(w, y) {
   return new Date(jan4.getTime() - jan4Dow * 86400000 + (w - 1) * 7 * 86400000);
 }
 
-// Build array of { label: "9–15" } for all 52 weeks
+// Build array of "9–15" labels for all 52 weeks
 function buildWeekLabels(year) {
   return Array.from({ length: 52 }, (_, i) => {
     const mon = weekMonday(i + 1, year);
@@ -101,11 +100,11 @@ function readableRot(midAng) {
   return (midAng > 0 && midAng < 180) ? rot + 180 : rot;
 }
 
-// ── Zoom/pan hook ─────────────────────────────────────────────────────────────
+// ── Zoom/pan hook (supports mouse wheel, pointer drag, and pinch-to-zoom) ─────
 function useZoomPan(svgRef) {
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
-  const dragging = useRef(false);
-  const lastPos  = useRef({ x: 0, y: 0 });
+  const pointers  = useRef(new Map()); // pointerId → { x, y }
+  const pinchDist = useRef(null);
 
   const onWheel = useCallback(e => {
     e.preventDefault();
@@ -124,27 +123,69 @@ function useZoomPan(svgRef) {
   }, [svgRef]);
 
   const onPointerDown = useCallback(e => {
-    dragging.current = true;
-    lastPos.current  = { x: e.clientX, y: e.clientY };
-    e.currentTarget.setPointerCapture(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    // Do NOT call setPointerCapture here — deferring to first actual movement
+    // ensures click events still fire on task arcs when there is no drag.
   }, []);
 
   const onPointerMove = useCallback(e => {
-    if (!dragging.current) return;
-    const dx = e.clientX - lastPos.current.x;
-    const dy = e.clientY - lastPos.current.y;
-    lastPos.current = { x: e.clientX, y: e.clientY };
-    setTransform(t => ({ ...t, x: t.x + dx, y: t.y + dy }));
-  }, []);
+    if (!pointers.current.has(e.pointerId)) return;
+    const prev = pointers.current.get(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-  const onPointerUp = useCallback(() => { dragging.current = false; }, []);
+    const pts = [...pointers.current.values()];
+
+    if (pts.length >= 2) {
+      // ── Pinch zoom ──
+      const [[ax, ay], [bx, by]] = pts.map(p => [p.x, p.y]);
+      const dist = Math.hypot(bx - ax, by - ay);
+
+      // Capture both pointers so pinch works when fingers leave the element
+      [...pointers.current.keys()].forEach(id => {
+        if (svgRef.current && !svgRef.current.hasPointerCapture(id)) {
+          svgRef.current.setPointerCapture(id);
+        }
+      });
+
+      if (pinchDist.current != null && dist > 0) {
+        const factor = dist / pinchDist.current;
+        const rect = svgRef.current.getBoundingClientRect();
+        const cx = (ax + bx) / 2 - rect.left;
+        const cy = (ay + by) / 2 - rect.top;
+        setTransform(t => {
+          const scale = Math.min(Math.max(t.scale * factor, 0.4), 6);
+          return {
+            scale,
+            x: cx - (cx - t.x) * (scale / t.scale),
+            y: cy - (cy - t.y) * (scale / t.scale),
+          };
+        });
+      }
+      pinchDist.current = dist;
+    } else {
+      // ── Single-pointer pan ──
+      const dx = e.clientX - prev.x;
+      const dy = e.clientY - prev.y;
+      if (dx !== 0 || dy !== 0) {
+        // Capture on first actual movement (leaves click events unaffected when no drag)
+        if (svgRef.current && !svgRef.current.hasPointerCapture(e.pointerId)) {
+          svgRef.current.setPointerCapture(e.pointerId);
+        }
+        setTransform(t => ({ ...t, x: t.x + dx, y: t.y + dy }));
+      }
+    }
+  }, [svgRef]);
+
+  const onPointerUp = useCallback(e => {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) pinchDist.current = null;
+  }, []);
 
   const resetZoom = useCallback(() => setTransform({ x: 0, y: 0, scale: 1 }), []);
 
   const zoomBy = useCallback(factor => {
     setTransform(t => {
       const scale = Math.min(Math.max(t.scale * factor, 0.4), 6);
-      // zoom toward the centre of the SVG element
       const el   = svgRef.current;
       const rect = el ? el.getBoundingClientRect() : { width: 0, height: 0 };
       const cx   = rect.width  / 2;
@@ -168,12 +209,13 @@ function useZoomPan(svgRef) {
 }
 
 // ── Wheel component ───────────────────────────────────────────────────────────
-export default function Wheel({ tasks, activeId, onTaskClick }) {
+export default function Wheel({ tasks, activeId, onTaskClick, year }) {
   const svgRef   = useRef(null);
   const now      = new Date();
-  const curMonth = now.getMonth() + 1;
-  const curWeek  = isoWeek(now);
-  const year     = now.getFullYear();
+  const thisYear = now.getFullYear();
+  const isCurrentYear = year === thisYear;
+  const curMonth = isCurrentYear ? now.getMonth() + 1 : -1;
+  const curWeek  = isCurrentYear ? isoWeek(now) : -1;
   const weekLabels = buildWeekLabels(year);
   const { transform, onPointerDown, onPointerMove, onPointerUp, resetZoom, zoomBy } = useZoomPan(svgRef);
 
@@ -188,6 +230,7 @@ export default function Wheel({ tasks, activeId, onTaskClick }) {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
         style={{ cursor: 'grab', touchAction: 'none', userSelect: 'none' }}
       >
         <g transform={`translate(${transform.x},${transform.y}) scale(${transform.scale})`}
@@ -200,14 +243,7 @@ export default function Wheel({ tasks, activeId, onTaskClick }) {
           {Array.from({ length: 12 }, (_, i) => i + 1).map(m => {
             const isCurrent = m === curMonth;
             const fill = isCurrent ? '#D6E8FF' : (m % 2 === 0 ? '#E5E8EE' : '#F0F2F5');
-            return <path key={m} d={annularSector(LABEL_RING_INNER, CENTER_R, mStart(m), mEnd(m), 0)} fill={fill} stroke="none"/>;
-          })}
-
-          {/* ── Old month-label ring now just background ── */}
-          {Array.from({ length: 12 }, (_, i) => i + 1).map(m => {
-            const isCurrent = m === curMonth;
-            const fill = isCurrent ? '#A8CBF0' : (m % 2 === 0 ? '#D0D5DF' : '#D8DCE8');
-            return <path key={m} d={annularSector(OUTER_R, LABEL_RING_INNER, mStart(m), mEnd(m), 0)} fill={fill} stroke="none"/>;
+            return <path key={m} d={annularSector(OUTER_R, CENTER_R, mStart(m), mEnd(m), 0)} fill={fill} stroke="none"/>;
           })}
 
           {/* ── Outer ring: week-date sub-ring (OUTER_R → WEEK_SPLIT_R) ── */}
@@ -227,7 +263,7 @@ export default function Wheel({ tasks, activeId, onTaskClick }) {
           {/* ── 52 week dividers in the outer ring ── */}
           {Array.from({ length: 52 }, (_, i) => i + 1).map(w => {
             const ang   = wStart(w);
-            const inner = polar(OUTER_R,     ang);
+            const inner = polar(OUTER_R,      ang);
             const outer = polar(WEEK_OUTER_R, ang);
             const isCurWeekBoundary = w === curWeek || w === curWeek + 1;
             return (
@@ -250,7 +286,7 @@ export default function Wheel({ tasks, activeId, onTaskClick }) {
               <text key={w}
                 transform={`translate(${f(pos.x)},${f(pos.y)}) rotate(${f(rot)})`}
                 textAnchor="middle" dominantBaseline="middle"
-                fontSize="7.5"
+                fontSize="7"
                 fontFamily="system-ui,sans-serif"
                 fontWeight={isCurWeek ? '700' : '400'}
                 fill={isCurWeek ? '#1A4A8A' : '#5A5F70'}
@@ -270,7 +306,7 @@ export default function Wheel({ tasks, activeId, onTaskClick }) {
               <text key={m}
                 transform={`translate(${f(pos.x)},${f(pos.y)}) rotate(${f(rot)})`}
                 textAnchor="middle" dominantBaseline="middle"
-                fontSize="11"
+                fontSize="10"
                 fontFamily="system-ui,sans-serif"
                 fontWeight={isCurrent ? '800' : '600'}
                 fill={isCurrent ? '#1A4A8A' : '#3A3F52'}
@@ -284,7 +320,7 @@ export default function Wheel({ tasks, activeId, onTaskClick }) {
           {Array.from({ length: 12 }, (_, i) => i).map(m => {
             const ang   = -90 + m * 30;
             const inner = polar(CENTER_R,     ang);
-            const outer = polar(WEEK_OUTER_R,  ang);
+            const outer = polar(WEEK_OUTER_R, ang);
             return <line key={m} x1={f(inner.x)} y1={f(inner.y)} x2={f(outer.x)} y2={f(outer.y)} stroke="white" strokeWidth="1.8"/>;
           })}
 
@@ -292,7 +328,7 @@ export default function Wheel({ tasks, activeId, onTaskClick }) {
           {Array.from({ length: 4 }, (_, i) => i).map(q => {
             const ang   = -90 + q * 90;
             const inner = polar(CENTER_R,     ang);
-            const outer = polar(WEEK_OUTER_R,  ang);
+            const outer = polar(WEEK_OUTER_R, ang);
             return <line key={q} x1={f(inner.x)} y1={f(inner.y)} x2={f(outer.x)} y2={f(outer.y)} stroke="white" strokeWidth="3"/>;
           })}
 
@@ -347,7 +383,7 @@ export default function Wheel({ tasks, activeId, onTaskClick }) {
                   <text
                     transform={`translate(${f(tp.x)},${f(tp.y)}) rotate(${f(rot)})`}
                     textAnchor="middle" dominantBaseline="middle"
-                    fontSize="10" fontFamily="system-ui,sans-serif" fontWeight="600"
+                    fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600"
                     fill="white" pointerEvents="none" opacity="0.95"
                   >
                     {label}

@@ -9,8 +9,13 @@ export default function App() {
   const allTasks = useMemo(() => processTasks(taskModules), []);
 
   const [activeId,  setActiveId]  = useState(null);
+  const [openId,    setOpenId]    = useState(null);
   const [search,    setSearch]    = useState('');
   const [catFilter, setCatFilter] = useState('all');
+  const [year,      setYear]      = useState(() => new Date().getFullYear());
+
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 8 }, (_, i) => currentYear - 1 + i);
 
   const categories = useMemo(() => {
     const seen = new Map();
@@ -32,8 +37,18 @@ export default function App() {
     });
   }, [allTasks, search, catFilter]);
 
+  // Wheel click: always open the card and scroll to it
   const handleTaskClick = id => {
     setActiveId(id);
+    setOpenId(id);
+    const el = document.getElementById(`card-${id}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
+  // Card header click: toggle open/close for that card
+  const handleCardClick = id => {
+    setActiveId(id);
+    setOpenId(cur => cur === id ? null : id);
     const el = document.getElementById(`card-${id}`);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
@@ -48,7 +63,7 @@ export default function App() {
       <div className="layout">
         {/* Wheel panel */}
         <div className="wheel-panel">
-          <Wheel tasks={visibleTasks} activeId={activeId} onTaskClick={handleTaskClick} />
+          <Wheel tasks={visibleTasks} activeId={activeId} onTaskClick={handleTaskClick} year={year} />
           {categories.size > 0 && (
             <div className="legend">
               {[...categories.entries()].map(([cat, col]) => (
@@ -70,6 +85,15 @@ export default function App() {
         <aside className="sidebar">
           <div className="sidebar-header">
             <h2>Tasks</h2>
+            <select
+              className="year-select"
+              value={year}
+              onChange={e => setYear(Number(e.target.value))}
+            >
+              {yearOptions.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
             <span>{visibleTasks.length} task{visibleTasks.length !== 1 ? 's' : ''}</span>
           </div>
 
@@ -101,7 +125,8 @@ export default function App() {
                     key={t.id}
                     task={t}
                     active={t.id === activeId}
-                    onActivate={handleTaskClick}
+                    open={t.id === openId}
+                    onActivate={handleCardClick}
                   />
                 ))
               : (
