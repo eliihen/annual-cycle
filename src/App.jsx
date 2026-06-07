@@ -5,6 +5,16 @@ import { processTasks, categoryColor } from './utils/tasks.js';
 
 const taskModules = import.meta.glob('../tasks/*.md', { eager: true });
 
+const MONTHS_FULL = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+// Calendar month (0–11) the task starts in, derived from its fractional year position
+function startMonthOf(task) {
+  return Math.min(11, Math.floor(task.startFrac * 12));
+}
+
 export default function App() {
   const allTasks = useMemo(() => processTasks(taskModules), []);
 
@@ -120,15 +130,23 @@ export default function App() {
 
           <div className="task-list">
             {visibleTasks.length > 0
-              ? visibleTasks.map(t => (
-                  <TaskCard
-                    key={t.id}
-                    task={t}
-                    active={t.id === activeId}
-                    open={t.id === openId}
-                    onActivate={handleCardClick}
-                  />
-                ))
+              ? visibleTasks.map((t, i) => {
+                  const month = startMonthOf(t);
+                  const showDivider = i === 0 || month !== startMonthOf(visibleTasks[i - 1]);
+                  return (
+                    <React.Fragment key={t.id}>
+                      {showDivider && (
+                        <div className="month-divider">{MONTHS_FULL[month]}</div>
+                      )}
+                      <TaskCard
+                        task={t}
+                        active={t.id === activeId}
+                        open={t.id === openId}
+                        onActivate={handleCardClick}
+                      />
+                    </React.Fragment>
+                  );
+                })
               : (
                 <div className="empty">
                   <strong>{search || catFilter !== 'all' ? 'No matching tasks' : 'No tasks yet'}</strong>
