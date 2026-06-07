@@ -110,6 +110,7 @@ responsible: CEO
 | `end_week` | 1–52 | week tasks | Last active ISO week |
 | `category` | string | no | Groups tasks by color |
 | `responsible` | string | no | Person shown on the card |
+| `responsible_slack_handle` | string | no | Slack handle — tagged with `@` in Slack digests |
 | `priority` | low / medium / high | no | For reference only |
 | `tags` | list | no | Shown as chips on the card |
 | `color` | hex string | no | Overrides the category color |

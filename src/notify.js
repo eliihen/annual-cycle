@@ -64,7 +64,8 @@ function loadTasks(dir) {
       const base = {
         title:       data.title       || file.replace(/\.md$/, ''),
         category:    data.category    || 'Other',
-        responsible: data.responsible || null,
+        responsible:        data.responsible        || null,
+        responsible_slack_handle: data.responsible_slack_handle || null,
         start_month: Math.min(Math.max(sm, 1), 12),
         end_month:   Math.min(Math.max(em, 1), 12),
         start_week:  hasWeeks ? Math.min(Math.max(sw, 1), 52) : null,
@@ -114,7 +115,15 @@ function formatRange(task) {
 }
 
 function formatTaskLine(task) {
-  const resp = task.responsible ? ` · ${task.responsible}` : '';
+  let resp = '';
+  if (task.responsible_slack_handle) {
+    const handle = task.responsible_slack_handle.startsWith('@')
+      ? task.responsible_slack_handle
+      : `@${task.responsible_slack_handle}`;
+    resp = ` · <${handle}>`;
+  } else if (task.responsible) {
+    resp = ` · ${task.responsible}`;
+  }
   return `• *${task.title}* (${task.category}) — ${formatRange(task)}${resp}`;
 }
 
