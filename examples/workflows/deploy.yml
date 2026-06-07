@@ -1,0 +1,40 @@
+# Copy this file to .github/workflows/deploy.yml in your repository.
+#
+# Before the first deploy:
+#   1. Go to Settings → Pages in your repository
+#   2. Set Source to "GitHub Actions"
+#
+# The site will then be live at https://<you>.github.io/<your-repo>/
+# after the first successful run.
+
+name: Deploy Annual Cycle
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tasks/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:        # also allows manual runs from the Actions tab
+
+# Required for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: eliihen/annual-cycle/.github/workflows/build-deploy.yml@main
+    # Optional overrides — the workflow auto-detects correct values for standard
+    # GitHub Pages setups, so you only need these if you use a custom domain or
+    # a non-default tasks directory.
+    #
+    # with:
+    #   base_path: /        # set to / when using a custom domain
+    #   site_url: https://example.com/
+    #   tasks_path: tasks   # path to your tasks folder (default: tasks)

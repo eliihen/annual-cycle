@@ -18,8 +18,12 @@ function markdownPlugin() {
   };
 }
 
+// Consumers set BASE_PATH=/<repo-name>/ via the reusable workflow; falls back to
+// the default path for this repo's own deployment.
+const base = process.env.BASE_PATH || '/annual-cycle/';
+
 export default defineConfig({
-  base: '/annual-cycle/',
+  base,
   plugins: [react(), markdownPlugin()],
   build: {
     outDir: 'dist',

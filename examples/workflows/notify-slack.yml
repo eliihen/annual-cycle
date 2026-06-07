@@ -1,0 +1,25 @@
+# Copy this file to .github/workflows/notify-slack.yml in your repository.
+#
+# Before enabling:
+#   1. Create a Slack incoming webhook at https://api.slack.com/messaging/webhooks
+#   2. Go to Settings → Secrets → Actions in your repository
+#   3. Add a secret named SLACK_WEBHOOK_URL with the webhook URL
+
+name: Annual Cycle – Slack Notification
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'    # Every Monday at 07:00 UTC
+  workflow_dispatch:
+    inputs:
+      period:
+        description: 'Period to notify for (week / month / quarter / all)'
+        required: false
+
+jobs:
+  notify:
+    uses: eliihen/annual-cycle/.github/workflows/notify-slack.yml@main
+    secrets:
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+    with:
+      period: ${{ inputs.period || '' }}
