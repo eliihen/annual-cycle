@@ -379,7 +379,11 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
             const startDeg = taskStartDeg(task);
             const endDeg   = taskEndDeg(task);
             const spanDeg  = endDeg - startDeg;
-            const d        = annularSector(outer, inner, startDeg, endDeg, 2);
+            // Angular inset trimmed off each end of the visible arc (see annularSector).
+            // The label's curved baseline must use the same bounds, otherwise its edge
+            // characters are centered into the gap and spill outside the colored shape.
+            const gapDeg   = 2;
+            const d        = annularSector(outer, inner, startDeg, endDeg, gapDeg);
             const isActive = task.id === activeId;
             const rangeLabel = task.unit === 'week'
               ? `Week ${task.start_week}–${task.end_week}`
@@ -387,7 +391,9 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
 
             const midAng  = (startDeg + endDeg) / 2;
             const midR    = (outer + inner) / 2;
-            const arcLength = midR * spanDeg * Math.PI / 180;
+            // Available label space is the visible (gap-trimmed) arc, not the full task span.
+            const trimmedSpanDeg = spanDeg - 2 * gapDeg;
+            const arcLength = midR * trimmedSpanDeg * Math.PI / 180;
             const maxChars  = Math.max(4, Math.floor(arcLength / 7));
 
             const lines = wrapLabel(task.title, maxChars);
@@ -401,12 +407,27 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
             const dir      = isBottom ? 1 : -1;
 
             const makeArcPath = r => {
-              const pS = polar(r, startDeg);
-              const pE = polar(r, endDeg);
+              const pS = polar(r, startDeg + gapDeg);
+              const pE = polar(r, endDeg - gapDeg);
               return isBottom
                 ? `M ${f(pE.x)},${f(pE.y)} A ${r},${r} 0 ${large},0 ${f(pS.x)},${f(pS.y)}`
                 : `M ${f(pS.x)},${f(pS.y)} A ${r},${r} 0 ${large},1 ${f(pE.x)},${f(pE.y)}`;
             };
+
+            // Very short arcs don't have enough curve length for the label to read
+            // well. Rotate it 90° to run radially across the ring's band instead —
+            // that band has a constant width and often more room than the curve does.
+            const useCurved   = arcLength >= 50;
+            const radialSpan  = outer - inner;
+            const radialChars = Math.max(4, Math.floor(radialSpan / 7));
+            const radialLines = wrapLabel(task.title, radialChars);
+            const radialDeg   = (radialLines.length * LINE_H / midR) * (180 / Math.PI);
+            const useRadial   = !useCurved && radialDeg <= trimmedSpanDeg;
+            const labelPos    = polar(midR, midAng);
+            // Keep the rotated label upright — never displayed upside-down.
+            let labelRot = midAng;
+            if (labelRot > 90) labelRot -= 180;
+            else if (labelRot < -90) labelRot += 180;
 
             return (
               <g key={task.id} onClick={() => onTaskClick(task.id)} style={{ cursor: 'pointer' }}>
@@ -417,7 +438,7 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
                 >
                   <title>{task.title} ({rangeLabel})</title>
                 </path>
-                {arcLength >= 50 && (
+                {useCurved && (
                   <>
                     <defs>
                       {lines.map((_, i) => {
@@ -436,6 +457,22 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
                       </text>
                     ))}
                   </>
+                )}
+                {useRadial && (
+                  <text
+                    x={f(labelPos.x)} y={f(labelPos.y)}
+                    transform={`rotate(${f(labelRot)} ${f(labelPos.x)} ${f(labelPos.y)})`}
+                    fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600"
+                    fill="white" pointerEvents="none" opacity="0.95" textAnchor="middle"
+                  >
+                    {radialLines.map((line, i) => (
+                      <tspan key={i} x={f(labelPos.x)}
+                        dy={i === 0 ? -(radialLines.length - 1) * LINE_H / 2 : LINE_H}
+                      >
+                        {line}
+                      </tspan>
+                    ))}
+                  </text>
                 )}
               </g>
             );
