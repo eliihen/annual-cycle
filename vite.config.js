@@ -25,8 +25,7 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
-        main:   resolve(__dirname, 'index.html'),
-        iframe: resolve(__dirname, 'iframe.html'),
+        main: resolve(__dirname, 'index.html'),
       },
     },
   },
