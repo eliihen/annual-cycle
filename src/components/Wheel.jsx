@@ -69,6 +69,30 @@ function ringRadii(ring) {
   return { outer, inner };
 }
 
+// Word-wrap title into up to 3 lines of maxChars each.
+// The last line is truncated with '…' if text still overflows.
+function wrapLabel(title, maxChars) {
+  if (title.length <= maxChars) return [title];
+  const words = title.split(' ');
+  const lines = [];
+  let current = '';
+  for (const word of words) {
+    const test = current ? `${current} ${word}` : word;
+    if (lines.length === 2) {
+      current = test; // last line — keep appending, truncate at end
+    } else if (test.length <= maxChars) {
+      current = test;
+    } else {
+      if (current) lines.push(current);
+      current = word;
+    }
+  }
+  if (current) {
+    lines.push(current.length > maxChars ? current.slice(0, maxChars - 1) + '…' : current);
+  }
+  return lines;
+}
+
 // ISO 8601 week number
 function isoWeek(date) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -363,24 +387,26 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
 
             const midAng  = (startDeg + endDeg) / 2;
             const midR    = (outer + inner) / 2;
-            // Arc length at the label radius (SVG units).  ~7 units per character
-            // at font-size 11 gives a comfortable fit with natural padding.
             const arcLength = midR * spanDeg * Math.PI / 180;
             const maxChars  = Math.max(4, Math.floor(arcLength / 7));
-            const label   = task.title.length > maxChars
-              ? task.title.slice(0, maxChars - 1) + '…'
-              : task.title;
 
-            // textPath: bottom-half arcs (midAng 0–180 in SVG coords = lower half)
-            // must run counter-clockwise so text reads left-to-right.
+            const lines = wrapLabel(task.title, maxChars);
+
+            // Bottom-half arcs (midAng 0–180) run counter-clockwise so text reads
+            // left-to-right. Offset direction also flips: upper-half text bodies
+            // extend toward larger radii; lower-half toward smaller radii.
             const isBottom = midAng > 0 && midAng < 180;
             const large    = spanDeg > 180 ? 1 : 0;
-            const pS = polar(midR, startDeg);
-            const pE = polar(midR, endDeg);
-            const textArcD = isBottom
-              ? `M ${f(pE.x)},${f(pE.y)} A ${midR},${midR} 0 ${large},0 ${f(pS.x)},${f(pS.y)}`
-              : `M ${f(pS.x)},${f(pS.y)} A ${midR},${midR} 0 ${large},1 ${f(pE.x)},${f(pE.y)}`;
-            const pathId = `tp-${task.id}`;
+            const LINE_H   = 13;
+            const dir      = isBottom ? 1 : -1;
+
+            const makeArcPath = r => {
+              const pS = polar(r, startDeg);
+              const pE = polar(r, endDeg);
+              return isBottom
+                ? `M ${f(pE.x)},${f(pE.y)} A ${r},${r} 0 ${large},0 ${f(pS.x)},${f(pS.y)}`
+                : `M ${f(pS.x)},${f(pS.y)} A ${r},${r} 0 ${large},1 ${f(pE.x)},${f(pE.y)}`;
+            };
 
             return (
               <g key={task.id} onClick={() => onTaskClick(task.id)} style={{ cursor: 'pointer' }}>
@@ -393,15 +419,22 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
                 </path>
                 {arcLength >= 50 && (
                   <>
-                    <defs><path id={pathId} d={textArcD}/></defs>
-                    <text
-                      fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600"
-                      fill="white" pointerEvents="none" opacity="0.95" textAnchor="middle"
-                    >
-                      <textPath href={`#${pathId}`} startOffset="50%">
-                        {label}
-                      </textPath>
-                    </text>
+                    <defs>
+                      {lines.map((_, i) => {
+                        const lineR = midR + dir * (i - (lines.length - 1) / 2) * LINE_H;
+                        return <path key={i} id={`tp-${task.id}-${i}`} d={makeArcPath(lineR)} />;
+                      })}
+                    </defs>
+                    {lines.map((line, i) => (
+                      <text key={i}
+                        fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600"
+                        fill="white" pointerEvents="none" opacity="0.95" textAnchor="middle"
+                      >
+                        <textPath href={`#tp-${task.id}-${i}`} startOffset="50%">
+                          {line}
+                        </textPath>
+                      </text>
+                    ))}
                   </>
                 )}
               </g>
