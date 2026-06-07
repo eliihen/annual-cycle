@@ -20,18 +20,48 @@ function isoWeek(date) {
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
 }
 
+const REPEAT_GAPS_WEEK  = { weekly: 1, biweekly: 2, monthly: 4, tertial: 17, quarterly: 13 };
+const REPEAT_GAPS_MONTH = { monthly: 1, quarterly: 3, tertial: 4, biannual: 6, semiannual: 6 };
+
+function expandRepeats(task) {
+  const repeat = task._repeat;
+  if (!repeat) return [task];
+  const instances = [task];
+  if (task._unit === 'week') {
+    const gap = REPEAT_GAPS_WEEK[repeat];
+    if (!gap) return instances;
+    const duration = task.end_week - task.start_week;
+    for (let n = 1; ; n++) {
+      const sw = task.start_week + gap * n;
+      if (sw > 52) break;
+      instances.push({ ...task, start_week: sw, end_week: Math.min(sw + duration, 52) });
+    }
+  } else {
+    const gap = REPEAT_GAPS_MONTH[repeat];
+    if (!gap) return instances;
+    const duration = task.end_month - task.start_month;
+    for (let n = 1; ; n++) {
+      const sm = task.start_month + gap * n;
+      if (sm > 12) break;
+      instances.push({ ...task, start_month: sm, end_month: Math.min(sm + duration, 12) });
+    }
+  }
+  return instances;
+}
+
 function loadTasks(dir) {
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir)
     .filter(f => f.endsWith('.md'))
-    .map(file => {
+    .flatMap(file => {
       const { data } = matter(fs.readFileSync(path.join(dir, file), 'utf-8'));
       const hasWeeks = data.start_week != null;
       const sm = parseInt(data.start_month) || 1;
       const em = parseInt(data.end_month)   || sm;
       const sw = hasWeeks ? (parseInt(data.start_week) || 1) : null;
       const ew = hasWeeks ? (parseInt(data.end_week)   || sw) : null;
-      return {
+      const repeat = data.repeat ? (data.repeat + '').toLowerCase().trim() : null;
+      const base = {
         title:       data.title       || file.replace(/\.md$/, ''),
         category:    data.category    || 'Other',
         responsible: data.responsible || null,
@@ -40,7 +70,9 @@ function loadTasks(dir) {
         start_week:  hasWeeks ? Math.min(Math.max(sw, 1), 52) : null,
         end_week:    hasWeeks ? Math.min(Math.max(ew, 1), 52) : null,
         _unit:       hasWeeks ? 'week' : 'month',
+        _repeat:     repeat,
       };
+      return expandRepeats(base);
     });
 }
 

@@ -1,3 +1,51 @@
+const REPEAT_GAPS_WEEK  = { weekly: 1, biweekly: 2, monthly: 4, tertial: 17, quarterly: 13 };
+const REPEAT_GAPS_MONTH = { monthly: 1, quarterly: 3, tertial: 4, biannual: 6, semiannual: 6 };
+
+function expandRepeats(task) {
+  const repeat = task.repeat;
+  if (!repeat) return [task];
+
+  const instances = [task];
+
+  if (task.unit === 'week') {
+    const gap = REPEAT_GAPS_WEEK[repeat];
+    if (!gap) return instances;
+    const duration = task.end_week - task.start_week;
+    for (let n = 1; ; n++) {
+      const sw = task.start_week + gap * n;
+      if (sw > 52) break;
+      const ew = Math.min(sw + duration, 52);
+      instances.push({
+        ...task,
+        id: `${task.id}--r${n + 1}`,
+        start_week: sw,
+        end_week:   ew,
+        startFrac:  (sw - 1) / 52,
+        endFrac:    ew / 52,
+      });
+    }
+  } else {
+    const gap = REPEAT_GAPS_MONTH[repeat];
+    if (!gap) return instances;
+    const duration = task.end_month - task.start_month;
+    for (let n = 1; ; n++) {
+      const sm = task.start_month + gap * n;
+      if (sm > 12) break;
+      const em = Math.min(sm + duration, 12);
+      instances.push({
+        ...task,
+        id: `${task.id}--r${n + 1}`,
+        start_month: sm,
+        end_month:   em,
+        startFrac:   (sm - 1) / 12,
+        endFrac:     em / 12,
+      });
+    }
+  }
+
+  return instances;
+}
+
 const CAT_COLORS = {
   finance:      '#E74C3C',
   hr:           '#3498DB',
@@ -64,6 +112,8 @@ export function processTasks(modules) {
     const startFrac = hasWeeks ? (sw - 1) / 52 : (sm - 1) / 12;
     const endFrac   = hasWeeks ? ew / 52        : em / 12;
 
+    const repeat = data.repeat ? (data.repeat + '').toLowerCase().trim() : null;
+
     return {
       id,
       title:       data.title       || id,
@@ -76,12 +126,13 @@ export function processTasks(modules) {
       responsible: data.responsible || null,
       priority:    data.priority    || 'medium',
       tags:        Array.isArray(data.tags) ? data.tags : [],
+      repeat,
       unit:        hasWeeks ? 'week' : 'month',
       startFrac,
       endFrac,
       html,
     };
-  }).sort((a, b) => a.startFrac - b.startFrac);
+  }).flatMap(expandRepeats).sort((a, b) => a.startFrac - b.startFrac);
 
   return assignRings(tasks).map(t => ({
     ...t,

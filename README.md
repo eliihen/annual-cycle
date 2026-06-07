@@ -113,6 +113,44 @@ responsible: CEO
 | `priority` | low / medium / high | no | For reference only |
 | `tags` | list | no | Shown as chips on the card |
 | `color` | hex string | no | Overrides the category color |
+| `repeat` | string | no | Repeat cadence — see below |
+
+### Repeating tasks
+
+Add `repeat` to any task to place it multiple times around the wheel and include all instances in Slack digests.
+
+**Week-based tasks:**
+
+| Value | Interval |
+|---|---|
+| `weekly` | Every week |
+| `biweekly` | Every 2 weeks |
+| `monthly` | Every 4 weeks |
+| `tertial` | Every 17 weeks (3× per year) |
+| `quarterly` | Every 13 weeks |
+
+**Month-based tasks:**
+
+| Value | Interval |
+|---|---|
+| `monthly` | Every month |
+| `quarterly` | Every 3 months |
+| `tertial` | Every 4 months (3× per year) |
+| `biannual` | Every 6 months |
+
+Example — a 1-week task that repeats every month starting in week 3:
+
+```yaml
+---
+title: Monthly Planning
+start_week: 3
+end_week: 3
+repeat: monthly
+category: Management
+---
+```
+
+This produces arcs at weeks 3, 7, 11, 15, 19, 23, 27, 31, 35, 39, 43, 47.
 
 See [`examples/tasks/`](examples/tasks/) for ready-to-use sample files.
 
