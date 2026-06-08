@@ -83,8 +83,11 @@ function weekToMonth(week) {
 }
 
 function taskOverlapsWeek(task, week) {
-  if (task._unit !== 'week') return false;
-  return task.start_week <= week && week <= task.end_week;
+  if (task._unit === 'week') {
+    return task.start_week <= week && week <= task.end_week;
+  }
+  const month = weekToMonth(week);
+  return task.start_month <= month && month <= task.end_month;
 }
 
 function taskOverlapsMonth(task, month) {
