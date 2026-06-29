@@ -1,0 +1,95 @@
+name: Annual Cycle – Build
+
+# Reusable workflow — call this from your own repository if you only want the
+# built static files (e.g. to host them yourself instead of GitHub Pages):
+#
+#   jobs:
+#     build:
+#       uses: eliihen/annual-cycle/.github/workflows/build.yml@main
+#
+# The built site is uploaded as a workflow artifact (default name
+# "annual-cycle-dist") that you can download from the run summary, or consume
+# in a later job with actions/download-artifact.
+#
+# If you want a one-step GitHub Pages deploy instead, use build-deploy.yml,
+# which calls this workflow and deploy.yml for you.
+
+on:
+  workflow_call:
+    inputs:
+      tasks_path:
+        description: Path to the tasks folder in the calling repository
+        type: string
+        required: false
+        default: tasks
+      base_path:
+        description: >
+          URL base path for the built site (e.g. /my-repo/).
+          Defaults to /<repo-name>/, which is correct for standard GitHub Pages URLs.
+        type: string
+        required: false
+        default: ''
+      site_url:
+        description: >
+          Full URL of the deployed site (e.g. https://myorg.github.io/my-repo/).
+          Used as the link target in the embeddable iframe build.
+          Defaults to https://<owner>.github.io/<repo-name>/.
+        type: string
+        required: false
+        default: ''
+      ref:
+        description: annual-cycle tag, branch, or SHA to build from
+        type: string
+        required: false
+        default: main
+      artifact_name:
+        description: Name of the uploaded build artifact
+        type: string
+        required: false
+        default: annual-cycle-dist
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout calling repository (tasks source)
+        uses: actions/checkout@v4
+        with:
+          path: consumer
+
+      - name: Checkout annual-cycle (build tooling)
+        uses: actions/checkout@v4
+        with:
+          repository: eliihen/annual-cycle
+          ref: ${{ inputs.ref }}
+          path: annual-cycle
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: annual-cycle/package-lock.json
+
+      - name: Install dependencies
+        working-directory: annual-cycle
+        run: npm ci
+
+      - name: Copy tasks into build tree
+        run: cp -r consumer/${{ inputs.tasks_path }} annual-cycle/tasks
+
+      - name: Build
+        working-directory: annual-cycle
+        run: npm run build
+        env:
+          BASE_PATH: ${{ inputs.base_path || format('/{0}/', github.event.repository.name) }}
+          IFRAME_LINK_TARGET: ${{ inputs.site_url || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: annual-cycle/dist/

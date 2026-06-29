@@ -1,0 +1,58 @@
+name: Annual Cycle – Deploy
+
+# Reusable workflow — deploys an already-built site to GitHub Pages.
+# Call this after build.yml has uploaded its artifact in the same run:
+#
+#   jobs:
+#     build:
+#       uses: eliihen/annual-cycle/.github/workflows/build.yml@main
+#     deploy:
+#       needs: build
+#       uses: eliihen/annual-cycle/.github/workflows/deploy.yml@main
+#
+# Your repo must grant: permissions: contents: read / pages: write / id-token: write
+#
+# If you just want a single workflow that builds and deploys, use
+# build-deploy.yml instead, which wires this together with build.yml for you.
+# See examples/workflows/deploy.yml for a complete example.
+
+on:
+  workflow_call:
+    inputs:
+      artifact_name:
+        description: Name of the build artifact produced by build.yml
+        type: string
+        required: false
+        default: annual-cycle-dist
+
+concurrency:
+  group: pages-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: dist
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+          overwrite: true
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

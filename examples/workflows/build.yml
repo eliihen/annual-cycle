@@ -1,0 +1,29 @@
+# Copy this file to .github/workflows/build.yml in your repository if you
+# want to self-host the built site (e.g. Netlify, S3, an internal server)
+# instead of deploying to GitHub Pages.
+#
+# The built dist/ files are uploaded as a workflow artifact named
+# "annual-cycle-dist" — download it from the run summary after each run.
+#
+# If you want a one-step GitHub Pages deploy instead, see deploy.yml in this
+# same folder, which uses build-deploy.yml for you.
+
+name: Build Annual Cycle
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tasks/**'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: eliihen/annual-cycle/.github/workflows/build.yml@main
+    # Optional overrides — see build-deploy.yml's inputs for details.
+    #
+    # with:
+    #   base_path: /
+    #   site_url: https://example.com/
+    #   tasks_path: tasks

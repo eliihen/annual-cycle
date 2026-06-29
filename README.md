@@ -29,7 +29,7 @@ Go to **Settings → Pages** in your new repository and set **Source** to **GitH
 
 ### 3. Add the deploy workflow
 
-Create `.github/workflows/deploy.yml` in your repository with the following content (or copy it from [`examples/workflows/deploy.yml`](examples/workflows/deploy.yml)):
+Create `.github/workflows/deploy.yml` in your repository with the following content (or copy it from [`examples/workflows/deploy.yml`](examples/workflows/deploy.yml)). If you'd rather self-host the build instead of using GitHub Pages, see [Build without deploying to GitHub Pages](#build-without-deploying-to-github-pages) below.
 
 ```yaml
 name: Deploy Annual Cycle
@@ -265,6 +265,43 @@ Replace `@main` with a tag to pin to a stable release:
 uses: eliihen/annual-cycle/.github/workflows/build-deploy.yml@v1.0.0
 ```
 
+### Build without deploying to GitHub Pages
+
+`build-deploy.yml` is a thin wrapper around two smaller reusable workflows,
+[`build.yml`](.github/workflows/build.yml) and
+[`deploy.yml`](.github/workflows/deploy.yml). If you want to host the static
+site yourself (e.g. Netlify, S3, an internal server) instead of using GitHub
+Pages, call `build.yml` directly — it uploads the built `dist/` output as a
+downloadable workflow artifact (`annual-cycle-dist` by default) instead of
+deploying it:
+
+```yaml
+jobs:
+  build:
+    uses: eliihen/annual-cycle/.github/workflows/build.yml@main
+    with:
+      tasks_path: tasks
+```
+
+Download the artifact from the workflow run summary, or consume it in a later
+job in the same run with `actions/download-artifact`. If you later decide you
+do want a GitHub Pages deploy, add a `deploy` job that depends on `build` and
+calls [`deploy.yml`](.github/workflows/deploy.yml):
+
+```yaml
+jobs:
+  build:
+    uses: eliihen/annual-cycle/.github/workflows/build.yml@main
+  deploy:
+    needs: build
+    uses: eliihen/annual-cycle/.github/workflows/deploy.yml@main
+```
+
+`deploy.yml` expects a build artifact (named `annual-cycle-dist` by default)
+to already exist in the same workflow run — it downloads it, re-packages it
+for GitHub Pages, and deploys it. This is exactly what `build-deploy.yml` does
+internally.
+
 ---
 
 ## Local development
@@ -308,10 +345,12 @@ src/
   iframe.css        ← iframe-only styles
 vite.config.js      ← Vite config with Markdown plugin and multi-page build
 .github/workflows/
-  deploy.yml                    ← deploys this repo to GitHub Pages
-  notify-slack.yml              ← sends Slack notifications for this repo
-  build-deploy.yml     ← reusable workflow for consumers
-  notify-slack.yml     ← reusable workflow for consumers
+  deploy-demo.yml          ← deploys this repo's own demo to GitHub Pages
+  notify-slack-demo.yml    ← sends Slack notifications for this repo's own demo
+  build.yml                ← reusable workflow for consumers — build only
+  deploy.yml               ← reusable workflow for consumers — deploy a build.yml artifact
+  build-deploy.yml         ← reusable workflow for consumers — wraps build.yml + deploy.yml
+  notify-slack.yml         ← reusable workflow for consumers — Slack digests
 ```
 
 ## License
