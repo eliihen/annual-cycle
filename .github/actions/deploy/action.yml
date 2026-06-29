@@ -1,0 +1,36 @@
+name: Annual Cycle Deploy
+description: >
+  Deploys an already-built Annual Cycle site (e.g. the dist_path output of
+  the build action) to GitHub Pages. Composite actions cannot declare
+  permissions or environments themselves — the job that uses this step must
+  include:
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.<this-step-id>.outputs.page_url }}
+
+inputs:
+  dist_path:
+    description: Path to the built site files to deploy
+    required: false
+    default: dist
+
+outputs:
+  page_url:
+    description: URL of the deployed Pages site
+    value: ${{ steps.deployment.outputs.page_url }}
+
+runs:
+  using: composite
+  steps:
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ${{ inputs.dist_path }}
+        overwrite: true
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4

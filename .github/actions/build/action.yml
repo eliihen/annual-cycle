@@ -1,0 +1,71 @@
+name: Annual Cycle Build
+description: >
+  Builds the Annual Cycle site from a tasks/ folder. Add this as a step in
+  your own job (after checking out your repository) so it intermingles with
+  whatever other steps you need. Produces a dist_path output you can deploy,
+  upload as an artifact, or push to your own host.
+
+inputs:
+  tasks_path:
+    description: Path to the tasks folder in the calling repository
+    required: false
+    default: tasks
+  base_path:
+    description: >
+      URL base path for the built site (e.g. /my-repo/).
+      Defaults to /<repo-name>/, which is correct for standard GitHub Pages URLs.
+    required: false
+    default: ''
+  site_url:
+    description: >
+      Full URL of the deployed site (e.g. https://myorg.github.io/my-repo/).
+      Used as the link target in the embeddable iframe build.
+      Defaults to https://<owner>.github.io/<repo-name>/.
+    required: false
+    default: ''
+  ref:
+    description: annual-cycle tag, branch, or SHA to build from
+    required: false
+    default: main
+
+outputs:
+  dist_path:
+    description: Path to the built site files
+    value: ${{ steps.build.outputs.dist_path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout annual-cycle (build tooling)
+      uses: actions/checkout@v4
+      with:
+        repository: eliihen/annual-cycle
+        ref: ${{ inputs.ref }}
+        path: annual-cycle-src
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: npm
+        cache-dependency-path: annual-cycle-src/package-lock.json
+
+    - name: Install dependencies
+      working-directory: annual-cycle-src
+      shell: bash
+      run: npm ci
+
+    - name: Copy tasks into build tree
+      shell: bash
+      run: cp -r "${{ inputs.tasks_path }}" annual-cycle-src/tasks
+
+    - name: Build
+      id: build
+      working-directory: annual-cycle-src
+      shell: bash
+      env:
+        BASE_PATH: ${{ inputs.base_path || format('/{0}/', github.event.repository.name) }}
+        IFRAME_LINK_TARGET: ${{ inputs.site_url || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
+      run: |
+        npm run build
+        echo "dist_path=annual-cycle-src/dist" >> "$GITHUB_OUTPUT"

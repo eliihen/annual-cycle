@@ -53,7 +53,14 @@ concurrency:
 
 jobs:
   deploy:
-    uses: eliihen/annual-cycle/.github/workflows/build-deploy.yml@main
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.build-deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: build-deploy
+        uses: eliihen/annual-cycle/.github/actions/build-deploy@main
 ```
 
 ### 4. Add your first task
@@ -200,11 +207,13 @@ on:
 
 jobs:
   notify:
-    uses: eliihen/annual-cycle/.github/workflows/notify-slack.yml@main
-    secrets:
-      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-    with:
-      period: ${{ inputs.period || '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: eliihen/annual-cycle/.github/actions/notify-slack@main
+        with:
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          period: ${{ inputs.period || '' }}
 ```
 
 You can also trigger a one-off notification manually from **Actions → Annual Cycle – Slack Notification → Run workflow**.
@@ -232,14 +241,17 @@ Clicking a task arc in the iframe navigates the top-level frame to your full sit
 
 All advanced options are optional. The defaults work for standard GitHub Pages setups.
 
+`build-deploy`, `build`, `deploy`, and `notify-slack` are [composite actions](.github/actions/), not reusable workflows — each is a single step you drop into your own job. That means you can freely add your own steps before or after them in the same job (checkout, custom build steps, a deploy-elsewhere step, notifications, etc.).
+
 ### Custom domain
 
-If your site is served from a custom domain (e.g. `https://cycle.example.com/`), set `base_path` and `site_url` in your deploy workflow:
+If your site is served from a custom domain (e.g. `https://cycle.example.com/`), set `base_path` and `site_url` on the action:
 
 ```yaml
-jobs:
-  deploy:
-    uses: eliihen/annual-cycle/.github/workflows/build-deploy.yml@main
+steps:
+  - uses: actions/checkout@v4
+  - id: build-deploy
+    uses: eliihen/annual-cycle/.github/actions/build-deploy@main
     with:
       base_path: /
       site_url: https://cycle.example.com/
@@ -250,9 +262,10 @@ jobs:
 If your tasks live somewhere other than `tasks/`:
 
 ```yaml
-jobs:
-  deploy:
-    uses: eliihen/annual-cycle/.github/workflows/build-deploy.yml@main
+steps:
+  - uses: actions/checkout@v4
+  - id: build-deploy
+    uses: eliihen/annual-cycle/.github/actions/build-deploy@main
     with:
       tasks_path: content/annual-tasks
 ```
@@ -262,45 +275,59 @@ jobs:
 Replace `@main` with a tag to pin to a stable release:
 
 ```yaml
-uses: eliihen/annual-cycle/.github/workflows/build-deploy.yml@v1.0.0
+uses: eliihen/annual-cycle/.github/actions/build-deploy@v1.0.0
 ```
 
 ### Build without deploying to GitHub Pages
 
-`build-deploy.yml` is a thin wrapper around two smaller reusable workflows,
-[`build.yml`](.github/workflows/build.yml) and
-[`deploy.yml`](.github/workflows/deploy.yml). If you want to host the static
+`build-deploy` is a thin wrapper around two smaller composite actions,
+[`build`](.github/actions/build/action.yml) and
+[`deploy`](.github/actions/deploy/action.yml). If you want to host the static
 site yourself (e.g. Netlify, S3, an internal server) instead of using GitHub
-Pages, call `build.yml` directly — it uploads the built `dist/` output as a
-downloadable workflow artifact (`annual-cycle-dist` by default) instead of
-deploying it:
+Pages, use `build` directly — it produces a `dist_path` output pointing at
+the built site files, which you can upload as an artifact, sync to your own
+host, or hand to any other step in the same job:
 
 ```yaml
 jobs:
   build:
-    uses: eliihen/annual-cycle/.github/workflows/build.yml@main
-    with:
-      tasks_path: tasks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: build
+        uses: eliihen/annual-cycle/.github/actions/build@main
+        with:
+          tasks_path: tasks
+      - name: Sync to S3
+        run: aws s3 sync ${{ steps.build.outputs.dist_path }} s3://my-bucket/ --delete
 ```
 
-Download the artifact from the workflow run summary, or consume it in a later
-job in the same run with `actions/download-artifact`. If you later decide you
-do want a GitHub Pages deploy, add a `deploy` job that depends on `build` and
-calls [`deploy.yml`](.github/workflows/deploy.yml):
+If you later decide you do want a GitHub Pages deploy, add a [`deploy`](.github/actions/deploy/action.yml) step right after `build` in the same job, passing along its `dist_path` output:
 
 ```yaml
 jobs:
-  build:
-    uses: eliihen/annual-cycle/.github/workflows/build.yml@main
   deploy:
-    needs: build
-    uses: eliihen/annual-cycle/.github/workflows/deploy.yml@main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: build
+        uses: eliihen/annual-cycle/.github/actions/build@main
+      - id: deploy
+        uses: eliihen/annual-cycle/.github/actions/deploy@main
+        with:
+          dist_path: ${{ steps.build.outputs.dist_path }}
 ```
 
-`deploy.yml` expects a build artifact (named `annual-cycle-dist` by default)
-to already exist in the same workflow run — it downloads it, re-packages it
-for GitHub Pages, and deploys it. This is exactly what `build-deploy.yml` does
-internally.
+This is exactly what `build-deploy` does internally. Note that composite
+actions can't declare `permissions:` or `environment:` themselves — your job
+must set those, as shown above.
 
 ---
 
@@ -344,13 +371,15 @@ src/
   index.css         ← main app styles
   iframe.css        ← iframe-only styles
 vite.config.js      ← Vite config with Markdown plugin and multi-page build
-.github/workflows/
-  deploy-demo.yml          ← deploys this repo's own demo to GitHub Pages
-  notify-slack-demo.yml    ← sends Slack notifications for this repo's own demo
-  build.yml                ← reusable workflow for consumers — build only
-  deploy.yml               ← reusable workflow for consumers — deploy a build.yml artifact
-  build-deploy.yml         ← reusable workflow for consumers — wraps build.yml + deploy.yml
-  notify-slack.yml         ← reusable workflow for consumers — Slack digests
+.github/
+  workflows/
+    deploy-demo.yml          ← deploys this repo's own demo to GitHub Pages
+    notify-slack-demo.yml    ← sends Slack notifications for this repo's own demo
+  actions/
+    build/action.yml         ← composite action for consumers — build only
+    deploy/action.yml        ← composite action for consumers — deploy a build's dist_path
+    build-deploy/action.yml  ← composite action for consumers — wraps build + deploy
+    notify-slack/action.yml  ← composite action for consumers — Slack digests
 ```
 
 ## License

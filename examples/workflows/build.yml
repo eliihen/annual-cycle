@@ -2,11 +2,8 @@
 # want to self-host the built site (e.g. Netlify, S3, an internal server)
 # instead of deploying to GitHub Pages.
 #
-# The built dist/ files are uploaded as a workflow artifact named
-# "annual-cycle-dist" — download it from the run summary after each run.
-#
-# If you want a one-step GitHub Pages deploy instead, see deploy.yml in this
-# same folder, which uses build-deploy.yml for you.
+# The build action is just a step, so it intermingles with whatever other
+# steps you need — add a deploy-elsewhere step right after it in the same job.
 
 name: Build Annual Cycle
 
@@ -20,10 +17,27 @@ on:
 
 jobs:
   build:
-    uses: eliihen/annual-cycle/.github/workflows/build.yml@main
-    # Optional overrides — see build-deploy.yml's inputs for details.
-    #
-    # with:
-    #   base_path: /
-    #   site_url: https://example.com/
-    #   tasks_path: tasks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Annual Cycle
+        id: build
+        uses: eliihen/annual-cycle/.github/actions/build@main
+        # Optional overrides — see build-deploy's inputs for details.
+        #
+        # with:
+        #   base_path: /
+        #   site_url: https://example.com/
+        #   tasks_path: tasks
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: annual-cycle-dist
+          path: ${{ steps.build.outputs.dist_path }}
+
+      # Or skip the artifact and deploy straight from this job, e.g.:
+      # - name: Sync to S3
+      #   run: aws s3 sync ${{ steps.build.outputs.dist_path }} s3://my-bucket/ --delete

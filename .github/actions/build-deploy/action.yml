@@ -1,0 +1,60 @@
+name: Annual Cycle Build & Deploy
+description: >
+  Builds the Annual Cycle site and deploys it to GitHub Pages in one step.
+  A thin wrapper around the build and deploy actions — if you want to
+  self-host instead of using GitHub Pages, use the build action directly.
+  Composite actions cannot declare permissions or environments themselves —
+  the job that uses this step must include:
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.<this-step-id>.outputs.page_url }}
+
+inputs:
+  tasks_path:
+    description: Path to the tasks folder in the calling repository
+    required: false
+    default: tasks
+  base_path:
+    description: >
+      URL base path for the built site (e.g. /my-repo/).
+      Defaults to /<repo-name>/, which is correct for standard GitHub Pages URLs.
+    required: false
+    default: ''
+  site_url:
+    description: >
+      Full URL of the deployed site (e.g. https://myorg.github.io/my-repo/).
+      Used as the link target in the embeddable iframe build.
+      Defaults to https://<owner>.github.io/<repo-name>/.
+    required: false
+    default: ''
+  ref:
+    description: annual-cycle tag, branch, or SHA to build from
+    required: false
+    default: main
+
+outputs:
+  page_url:
+    description: URL of the deployed Pages site
+    value: ${{ steps.deploy.outputs.page_url }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build
+      id: build
+      uses: ./.github/actions/build
+      with:
+        tasks_path: ${{ inputs.tasks_path }}
+        base_path: ${{ inputs.base_path }}
+        site_url: ${{ inputs.site_url }}
+        ref: ${{ inputs.ref }}
+
+    - name: Deploy
+      id: deploy
+      uses: ./.github/actions/deploy
+      with:
+        dist_path: ${{ steps.build.outputs.dist_path }}

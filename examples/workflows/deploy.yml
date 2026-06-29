@@ -29,12 +29,25 @@ concurrency:
 
 jobs:
   deploy:
-    uses: eliihen/annual-cycle/.github/workflows/build-deploy.yml@main
-    # Optional overrides — the workflow auto-detects correct values for standard
-    # GitHub Pages setups, so you only need these if you use a custom domain or
-    # a non-default tasks directory.
-    #
-    # with:
-    #   base_path: /        # set to / when using a custom domain
-    #   site_url: https://example.com/
-    #   tasks_path: tasks   # path to your tasks folder (default: tasks)
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.build-deploy.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build & deploy Annual Cycle
+        id: build-deploy
+        uses: eliihen/annual-cycle/.github/actions/build-deploy@main
+        # Optional overrides — the action auto-detects correct values for standard
+        # GitHub Pages setups, so you only need these if you use a custom domain or
+        # a non-default tasks directory.
+        #
+        # with:
+        #   base_path: /        # set to / when using a custom domain
+        #   site_url: https://example.com/
+        #   tasks_path: tasks
+
+      # Add any of your own steps here too — composite actions are just
+      # another step, so they intermingle freely with the rest of your job.

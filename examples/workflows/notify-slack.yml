@@ -18,8 +18,13 @@ on:
 
 jobs:
   notify:
-    uses: eliihen/annual-cycle/.github/workflows/notify-slack.yml@main
-    secrets:
-      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-    with:
-      period: ${{ inputs.period || '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Send Slack notification
+        uses: eliihen/annual-cycle/.github/actions/notify-slack@main
+        with:
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          period: ${{ inputs.period || '' }}
