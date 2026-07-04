@@ -5,13 +5,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev        # Vite dev server with hot reload (http://localhost:5173)
-npm run build      # Production build → dist/
-npm run preview    # Serve the dist/ build locally
-npm run notify     # Send Slack notification (requires SLACK_WEBHOOK_URL env var)
+npm run dev            # Vite dev server with hot reload (http://localhost:5173)
+npm run build          # Production build → dist/
+npm run preview        # Serve the dist/ build locally
+npm run notify         # Send Slack notification (requires SLACK_WEBHOOK_URL env var)
+npm test               # Run the Vitest suite once
+npm run test:watch     # Run Vitest in watch mode
+npm run test:coverage  # Run the suite with a v8 coverage report
 ```
 
-There are no tests or linter configured.
+Tests live alongside the source they cover (`src/**/*.test.js`), run via Vitest. There is no linter configured.
 
 ## Architecture
 
