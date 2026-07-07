@@ -59,6 +59,7 @@ jobs:
             registry.npmjs.org:443
             nodejs.org:443
             claude.ai:443
+            downloads.claude.ai:443
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -135,6 +136,7 @@ jobs:
             registry.npmjs.org:443
             nodejs.org:443
             claude.ai:443
+            downloads.claude.ai:443
 
       - name: Checkout
         uses: actions/checkout@v4
