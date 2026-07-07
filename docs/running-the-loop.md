@@ -21,16 +21,28 @@ updated at the end.
 
 ## Cloud tier — the daily job (recommended default)
 
-`.github/workflows/loop-triage.yml` already runs Mon–Fri at 06:00 UTC. To arm it:
+`.github/workflows/loop-triage.yml` runs Mon–Fri at 06:00 UTC as **two jobs**: a
+read-only `triage` job (ingests untrusted issue text with a read-only token,
+emits a sanitized backlog artifact) and a write-scoped `autofix` job (consumes
+only that artifact and opens PRs). Both run under `step-security/harden-runner`
+with an egress allowlist. To arm it:
 
 1. Add the repo secret **`ANTHROPIC_API_KEY`**
    (Settings → Secrets and variables → Actions → New repository secret).
-2. That's it — it will run on the next cron tick. To test immediately, trigger it
-   by hand:
+2. **Enable branch protection on `main`** with *Require a pull request before
+   merging* + *Require review from Code Owners* (Settings → Branches). This is
+   what makes `.github/CODEOWNERS` binding — without it a self-modifying agent's
+   PR to the workflow/guard could merge without a human. It also enforces the
+   "humans merge, the loop never does" backstop.
+3. It runs on the next cron tick. To test immediately:
    ```bash
    gh workflow run loop-triage.yml
    gh run watch
    ```
+
+> Why two jobs? So the GitHub write token is **not live while the agent reads
+> attacker-controlled issue/PR text** — the classic prompt-injection blast-radius
+> reducer. See `docs/loop-decisions.md` → D10 for the full threat model.
 
 To create/adjust the schedule from inside a Claude Code session instead, use the
 `/schedule` skill:
@@ -87,16 +99,33 @@ a `GITHUB_TOKEN`/`GITHUB_PERSONAL_ACCESS_TOKEN` in your environment. To extend:
 
 Add each as another key under `mcpServers` in `.mcp.json`, following the GitHub
 entry as a template, and supply its credential as an environment variable /
-secret. Do **not** commit tokens — reference them via `${ENV_VAR}`.
+secret. Do **not** commit tokens — reference them via `${ENV_VAR}`. If you supply
+`GITHUB_PERSONAL_ACCESS_TOKEN` for the GitHub MCP server, scope it to **this repo
+only** (a fine-grained PAT) — a classic broad PAT would widen the blast radius
+well past this repo, past the ephemeral job token.
 
-## Safety model (what can't go wrong)
+## Safety model — layered, honest about what enforces what
 
-- The `PreToolUse` guard (`scripts/hooks/guard.js`) blocks force-pushes,
-  `rm -rf` outside worktrees/build dirs, and any edit to
-  `.github/actions/*/action.yml` unless `LOOP_ALLOW_ACTION_EDITS=1` — the
-  composite actions are a public API.
-- The `PostToolUse` hook lints changed JS/JSX and surfaces real errors.
-- The `Stop` hook refuses to end a run that changed files without updating
-  `LOOP_STATE.md`.
-- The verifier is a **different, stronger model** than the implementer, and no
-  PR opens without `VERDICT: APPROVE`. Humans still merge.
+The controls are layered from strongest (structural, below the agent) to weakest
+(soft, in-prompt). **Do not treat the guard hook as a sandbox** — see
+`docs/loop-decisions.md` → D10.
+
+1. **Runner egress filter (the real boundary).** `harden-runner` with
+   `egress-policy: block` + a host allowlist means a prompt-injected agent
+   *cannot reach an attacker host*, whatever it runs. This is what actually stops
+   exfiltration.
+2. **Least privilege.** Two-job split so the GitHub write token isn't live while
+   untrusted issue text is read; `npm ci --ignore-scripts`; top-level
+   `permissions: {}`.
+3. **Human approval.** CODEOWNERS + branch protection on `.github/**` and the
+   guard hooks; the loop **never merges** its own PRs.
+4. **Deterministic guard** (`scripts/hooks/guard.js`, PreToolUse) — defense in
+   depth: blocks force-push (incl. `+refspec`), non-origin push, `gh api` writes,
+   `rm -rf`/destructive ops outside safe dirs, `action.yml` writes, raw egress
+   (curl/wget/interpreter-eval/`/dev/tcp`), secret/credential reads, and WebFetch
+   to non-allowlisted hosts. A denylist — a speed bump, not the boundary.
+5. **`PostToolUse` lint** surfaces real errors on changed JS/JSX; the **`Stop`**
+   hook refuses to end a file-changing run without a `LOOP_STATE.md` update.
+6. **Untrusted-data framing + author trust boundary + maker/checker** (soft, but
+   the verifier is a stronger, different model and no PR opens without
+   `VERDICT: APPROVE`).

@@ -28,12 +28,20 @@ maker never merges its own work.
   that adversarially re-runs the gates and ends with `VERDICT: APPROVE|REJECT`).
   No PR opens without an APPROVE.
 - **Guardrails** (`.claude/settings.json` + `scripts/hooks/`): PreToolUse guard
-  (blocks force-push, stray `rm -rf`, and edits to the public
-  `.github/actions/*/action.yml` API), PostToolUse lint, and a Stop hook that
-  refuses to end a file-changing run without a `LOOP_STATE.md` update.
-- **Heartbeat**: `.github/workflows/loop-triage.yml` (daily cloud cron) and the
-  local `/loop` equivalent. See **`docs/running-the-loop.md`** to arm it and
-  **`docs/loop-decisions.md`** for the design rationale.
+  (blocks force-push, non-origin push, `gh api` writes, `rm -rf`/destructive ops,
+  raw network egress, secret/credential reads, `.github/actions/*/action.yml`
+  writes, and non-allowlisted WebFetch), PostToolUse lint, and a Stop hook that
+  refuses to end a file-changing run without a `LOOP_STATE.md` update. The guard
+  is **defense-in-depth, not a sandbox** — the real boundary is the workflow's
+  runner egress filter + least-privilege job split + human merge.
+- **Security**: the loop ingests untrusted public issue/PR text. Enforcement is
+  layered (harden-runner egress allowlist, read-only-vs-write job split,
+  `--ignore-scripts`, CODEOWNERS + branch protection, human merge). Full threat
+  model and the per-finding review response are in **`docs/loop-decisions.md`**.
+- **Heartbeat**: `.github/workflows/loop-triage.yml` (daily cloud cron, two-job
+  read-only→write split) and the local `/loop` equivalent. See
+  **`docs/running-the-loop.md`** to arm it (needs `ANTHROPIC_API_KEY` + branch
+  protection) and **`docs/loop-decisions.md`** for the design rationale.
 
 ## Architecture
 

@@ -18,15 +18,24 @@ process.stdin.on('end', () => {
 
   let porcelain = '';
   try {
-    porcelain = execSync('git status --porcelain', { encoding: 'utf8' });
+    // NUL-delimited (`-z`) so paths with spaces and renames (`R old\0new`) parse
+    // correctly instead of being mangled by a naive line/space split.
+    porcelain = execSync('git status --porcelain=v1 -z', { encoding: 'utf8' });
   } catch {
     process.exit(0); // not a git repo / git unavailable — don't block
   }
 
-  const changed = porcelain
-    .split('\n')
-    .map(l => l.slice(3).trim())   // strip the XY status prefix
-    .filter(Boolean);
+  // With -z, records are NUL-separated. Each record is "XY <path>"; a rename adds
+  // a second NUL-separated field (the origin path) which we can ignore here —
+  // what matters is which paths changed, and both halves are captured as fields.
+  const fields = porcelain.split('\0').filter(Boolean);
+  const changed = [];
+  for (let i = 0; i < fields.length; i++) {
+    const rec = fields[i];
+    const status = rec.slice(0, 2);
+    changed.push(rec.slice(3)); // path (no trim — paths may legitimately have spaces)
+    if (/R|C/.test(status)) i++; // rename/copy: the next field is the origin path; skip it
+  }
 
   if (changed.length === 0) process.exit(0); // nothing changed — fine to stop
 

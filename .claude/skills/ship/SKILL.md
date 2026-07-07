@@ -68,7 +68,12 @@ Append to `LOOP_STATE.md`: move the item from `In progress` to `Done` with the
 PR link and outcome. This is required — the `Stop` hook enforces it.
 
 ## Guardrails
-- No force-push (`git push --force` is blocked by a PreToolUse hook).
+- No force-push (`git push --force`, `-f`, and `+refspec` are blocked by a
+  PreToolUse hook), and pushing to any remote other than `origin` is blocked.
+- **Never merge, and never enable auto-merge.** `VERDICT: APPROVE` authorizes
+  *opening* a PR, not landing it. A human merge is the loop's real backstop
+  against a verifier that was talked into approving — do not weaken it, and do
+  not `gh pr merge` / `gh pr merge --auto` under any circumstances.
 - One PR per item; keep them independently reviewable and revertable.
 - If `gh pr create` fails (e.g. no remote), leave the branch pushed/local and
   record the blocker in `LOOP_STATE.md` under `In progress`.

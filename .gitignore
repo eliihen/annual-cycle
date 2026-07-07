@@ -5,3 +5,5 @@ coverage/
 # Loop worktrees created by the implementer agent (isolation: worktree)
 .worktrees/
 loop-bootstrap-prompt.md
+# Sanitized backlog artifact handed from the read-only triage job to autofix
+loop-backlog.md

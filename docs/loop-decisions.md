@@ -127,17 +127,47 @@ create that input.
   code).
 
 ### Residual risk / future work
-- Exfil via `gh api` to github.com itself (e.g. posting a secret into a comment)
-  is not fully blockable while the agent needs `gh`; mitigated by the
-  secret-reference guard, but a determined injection that constructs the string
-  indirectly could still try. Consider a network-namespace egress allowlist and a
-  post-run secret-scan of created branches/PRs.
-- The `contents: write` token is broader than strictly required; a future pass
-  could split branch-push into a narrowly-scoped deploy key.
-- `guard.js` egress detection is token/regex based; it is a speed bump, not a
-  sandbox. The real boundary is human merge + least privilege.
+- **`guard.js` is defense-in-depth, not a sandbox.** As long as the loop can run
+  `node`/`npm`/`git`/`gh`, an in-process regex cannot fully contain a
+  prompt-injected agent. The guard closes the known cheap bypasses so they cost
+  something; the *boundary* is the runner-level egress filter + least privilege +
+  human merge (below).
+- Exfil via `gh api` to github.com itself is now blocked for write verbs, and
+  harden-runner's allowlist stops egress to non-GitHub/Anthropic hosts — but an
+  injection that posts a secret *into GitHub* (a comment on an allowed host) is
+  still conceivable. A post-run secret-scan of created branches/PRs would harden
+  this further.
+- The `autofix` job still holds `contents: write`; a future pass could push via a
+  narrowly-scoped deploy key or GitHub App token instead of the job token.
+- Toolset restriction (`--allowedTools`) on the cloud action is documented as a
+  follow-up; today the guard screens WebFetch and the harden-runner allowlist is
+  the egress control regardless of which tool initiates it.
 
-### D9 — Injection hardening (added after review)
-Implemented all of the above controls in response to a security review of the
-bootstrap. Guard gained egress + secret denylists (with tests); triage/verifier/
-workflow gained untrusted-data framing and the author trust boundary.
+### D9 — Injection hardening, round 1 (untrusted-data framing)
+Guard gained egress + secret denylists; triage/verifier/workflow gained
+untrusted-data framing and the author trust boundary.
+
+### D10 — Adversarial review response (enforcement moved below the agent)
+A deep second review confirmed (by running `evaluate()`) that the guard's
+denylists were bypassable — the correct lesson being that the guard was doing a
+sandbox's job. Response, by finding:
+
+| Finding | Resolution |
+|---|---|
+| **C1** interpreter/absolute-path/`bash -c` egress bypass | **harden-runner** `egress-policy: block` + host allowlist in *both* workflow jobs (the real control). Guard also now catches `node -e`/`python -c`, absolute-path binaries (basename check), `bash -c "…"` payloads, and `/dev/tcp` as defense-in-depth. |
+| **C2** secret readable without `$VAR` | harden-runner egress makes a read useless without a send. Guard also blocks `process.env.<SECRET>` and reads of credential files (`.netrc`, `.npmrc`, `gh/hosts.yml`, ssh keys, …). |
+| **C3** write scope live while reading untrusted text | Workflow **split into two jobs**: read-only `triage` (contents: read) ingests issue text and emits a sanitized `loop-backlog.md` artifact; write-scoped `autofix` consumes only that artifact and is instructed not to re-read raw issue bodies. Top-level `permissions: {}`. |
+| **H1** `git`/`gh` exfil + `+refspec` force-push hole | Guard blocks `+refspec` pushes, pushes to non-origin remotes/URLs, `git remote add/set-url`, and `gh api` with write verbs. |
+| **H2** `npm install` lifecycle RCE | `npm ci --ignore-scripts` in both jobs. |
+| **H3** action.yml Bash-write evasion | Real fix: **CODEOWNERS** on `.github/**` + guard hooks (human review required). Guard's write-primitive list also broadened (node/python/perl/ruby/install/patch/…). |
+| **M1** only 5 tools screened | Guard now also screens **WebFetch/WebSearch** against a host allowlist, and the settings matcher includes them. |
+| **M2** non-`rm` destructive ops | Guard blocks `shred`/`truncate`/`find -delete`/`find -exec rm`/`git clean -f…`. |
+| **M3** authorAssociation weaker than it looks | triage skill now states "trusted author ≠ trusted bytes": prefer mechanical signals; trusted free-text is auto-fixable only when the *fix* is mechanical and self-evident from code. |
+| **M4** verifier reads untrusted item | Kept human-merge as the hard backstop; `ship` now explicitly forbids `gh pr merge`/auto-merge. |
+| **L1** porcelain parse mangles renames | `require-loop-state.js` uses `git status --porcelain=v1 -z` (NUL-delimited). |
+| **L2** unpinned Slack webhook host | `notify.js` pins the POST to `https://hooks.slack.com`. |
+| **L3** SECRET_VAR_RE not a strong tripwire | Acknowledged; moot given C2 file/env coverage + egress filter. |
+
+**Operator action required:** the two structural controls only bind once armed —
+(a) `ANTHROPIC_API_KEY` secret, and (b) **branch protection on `main`** with
+"Require review from Code Owners". Without (b), CODEOWNERS is advisory only.

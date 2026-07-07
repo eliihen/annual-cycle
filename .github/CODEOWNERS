@@ -1,0 +1,14 @@
+# Human approval is required for changes to security-sensitive infrastructure,
+# regardless of what any autonomous agent proposes. Enable branch protection on
+# `main` with "Require review from Code Owners" for this to be enforced.
+#
+# These are the paths a prompt-injected loop could try to weaken:
+#   - the public composite-action API (consumed by other repos)
+#   - the workflows (privilege/secret scope, egress policy)
+#   - the guard hooks and loop settings (the deterministic guardrails themselves)
+
+/.github/actions/**       @eliihen
+/.github/workflows/**     @eliihen
+/.github/CODEOWNERS       @eliihen
+/.claude/settings.json    @eliihen
+/scripts/hooks/**         @eliihen
