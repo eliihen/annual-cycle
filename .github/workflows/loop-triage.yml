@@ -1,0 +1,77 @@
+name: Loop – daily triage & auto-fix
+
+# Cloud tier of the two-tier heartbeat (see docs/running-the-loop.md).
+#
+# Every morning this runs the `triage` skill to discover work, then for each
+# `auto-fixable` backlog item runs the explorer -> implementer -> verifier chain
+# and opens one PR per item via the `ship` skill. Capped at 3 items per run to
+# bound token cost.
+#
+# REQUIRED REPO SECRET: `ANTHROPIC_API_KEY`
+#   Settings → Secrets and variables → Actions → New repository secret.
+#   The workflow cannot run without it.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1-5' # 06:00 UTC, Monday–Friday
+  workflow_dispatch: {}
+
+permissions:
+  contents: write        # create branches / commits
+  pull-requests: write   # open PRs
+  issues: read           # read the backlog from issues
+
+concurrency:
+  group: loop-triage
+  cancel-in-progress: false
+
+jobs:
+  triage-and-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the loop
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: '--max-turns 60'
+          prompt: |
+            You are running the autonomous maintenance loop for this repo.
+            Work fully autonomously; do not ask questions.
+
+            1. Read LOOP_STATE.md first — it is the loop's memory. Never duplicate
+               anything already tracked there.
+            2. Invoke the `triage` skill to discover new work and append tagged,
+               deduplicated findings to the `## Backlog` in LOOP_STATE.md.
+            3. Select at most THREE items tagged `auto-fixable` (hard cap — this
+               controls token cost). Skip anything `needs-human`.
+            4. For each selected item, run the maker/checker chain:
+                 a. `explorer` agent — investigate and produce a concrete plan.
+                 b. `implementer` agent (worktree-isolated) — implement it and make
+                    `npm test`, `npm run lint`, and `npm run build` all pass.
+                 c. `verifier` agent (a stronger, different model) — adversarially
+                    review, re-run the gates, and check the composite-action
+                    interfaces in .github/actions/ were not broken. It ends with
+                    exactly `VERDICT: APPROVE` or `VERDICT: REJECT — <reasons>`.
+                 A REJECT returns to the implementer at most twice; after that tag
+                 the item `needs-human` in LOOP_STATE.md and move on.
+            5. Only after `VERDICT: APPROVE`, use the `ship` skill to open one PR
+               per item (branch `loop/<slug>`, required What/Why/Verification body).
+            6. Update LOOP_STATE.md before finishing — move each item to Done with
+               its PR link, or record blockers under In progress.
+
+            Never edit `.github/actions/*/action.yml` unless a backlog item
+            explicitly targets it. Never force-push. Never merge PRs — humans do that.

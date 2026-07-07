@@ -1,3 +1,7 @@
 node_modules/
 dist/
 .DS_Store
+coverage/
+# Loop worktrees created by the implementer agent (isolation: worktree)
+.worktrees/
+loop-bootstrap-prompt.md
