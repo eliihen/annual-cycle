@@ -42,6 +42,7 @@ jobs:
       contents: read
       issues: read
       pull-requests: read
+      id-token: write
     steps:
       - name: Harden runner (egress allowlist)
         uses: step-security/harden-runner@v2
@@ -117,6 +118,7 @@ jobs:
     permissions:
       contents: write        # create branches / commits
       pull-requests: write   # open PRs
+      id-token: write
     steps:
       - name: Harden runner (egress allowlist)
         uses: step-security/harden-runner@v2
