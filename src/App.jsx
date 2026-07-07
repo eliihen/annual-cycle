@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Wheel from './components/Wheel.jsx';
 import TaskCard from './components/TaskCard.jsx';
-import { processTasks, categoryColor } from './utils/tasks.js';
+import { processTasks } from './utils/tasks.js';
 
 const taskModules = import.meta.glob('../tasks/*.md', { eager: true });
 
