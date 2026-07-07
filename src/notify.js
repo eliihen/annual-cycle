@@ -160,6 +160,14 @@ function postToSlack(webhookUrl, payload) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(payload);
     const url  = new URL(webhookUrl);
+    // Pin the destination: a Slack incoming webhook is always
+    // https://hooks.slack.com/…. Refusing anything else keeps this from
+    // becoming an SSRF / exfiltration sink if a webhook URL ever comes from a
+    // less-trusted source (e.g. task frontmatter) rather than the repo secret.
+    if (url.protocol !== 'https:' || url.hostname !== 'hooks.slack.com') {
+      reject(new Error(`Refusing to POST to non-Slack webhook host: ${url.protocol}//${url.hostname}`));
+      return;
+    }
     const req  = https.request({
       hostname: url.hostname,
       path:     url.pathname + url.search,

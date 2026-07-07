@@ -6,12 +6,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm run dev        # Vite dev server with hot reload (http://localhost:5173)
-npm run build      # Production build → dist/
+npm run build      # Production build → dist/ (dual: index.html + iframe.html)
 npm run preview    # Serve the dist/ build locally
 npm run notify     # Send Slack notification (requires SLACK_WEBHOOK_URL env var)
+npm test           # Run the Vitest unit tests
+npm run lint       # Run ESLint (flat config); errors block, style issues are warnings
 ```
 
-There are no tests or linter configured.
+## Autonomous maintenance loop
+
+This repo runs a self-sustaining "loop engineering" architecture for routine
+maintenance. **All autonomous work flows through a maker/checker split** — a
+maker never merges its own work.
+
+- **`LOOP_STATE.md`** (repo root) is the loop's memory: every run reads it first
+  and appends to it before finishing. Start there.
+- **Skills** (`.claude/skills/`): `project-conventions` (ground-truth stack/data
+  model/API), `triage` (discover work), `ship` (open PRs).
+- **Agents** (`.claude/agents/`): `explorer` (read-only, haiku) → `implementer`
+  (worktree-isolated, sonnet) → `verifier` (opus — a stronger, different model
+  that adversarially re-runs the gates and ends with `VERDICT: APPROVE|REJECT`).
+  No PR opens without an APPROVE.
+- **Guardrails** (`.claude/settings.json` + `scripts/hooks/`): PreToolUse guard
+  (blocks force-push, non-origin push, `gh api` writes, `rm -rf`/destructive ops,
+  raw network egress, secret/credential reads, `.github/actions/*/action.yml`
+  writes, and non-allowlisted WebFetch), PostToolUse lint, and a Stop hook that
+  refuses to end a file-changing run without a `LOOP_STATE.md` update. The guard
+  is **defense-in-depth, not a sandbox** — the real boundary is the workflow's
+  runner egress filter + least-privilege job split + human merge.
+- **Security**: the loop ingests untrusted public issue/PR text. Enforcement is
+  layered (harden-runner egress allowlist, read-only-vs-write job split,
+  `--ignore-scripts`, CODEOWNERS + branch protection, human merge). Full threat
+  model and the per-finding review response are in **`docs/loop-decisions.md`**.
+- **Heartbeat**: `.github/workflows/loop-triage.yml` (daily cloud cron, two-job
+  read-only→write split) and the local `/loop` equivalent. See
+  **`docs/running-the-loop.md`** to arm it (needs `ANTHROPIC_API_KEY` + branch
+  protection) and **`docs/loop-decisions.md`** for the design rationale.
 
 ## Architecture
 
