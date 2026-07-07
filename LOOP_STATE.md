@@ -9,6 +9,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 ## Done
 
+- 2026-07-07 — Fix failing `triage` GitHub Actions job by allowlisting `release-assets.githubusercontent.com` for Bun downloads in `.github/workflows/loop-triage.yml` — branch `copilot/fix-triage-job-failure` — root cause confirmed from Actions job 85657446866; local test + build pass, lint unchanged (warnings only)
 - 2026-07-07 — Bootstrap loop-engineering architecture (skills, agents, hooks, cloud triage workflow, state file) — branch `loop/bootstrap` — PR in review
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — [PR #3](https://github.com/eliihen/annual-cycle/pull/3), branch `loop/rm-unused-import` — full explorer(haiku)→implementer(sonnet,worktree)→verifier(opus) chain, VERDICT: APPROVE, PR opened
 - 2026-07-07 — Harden PreToolUse guard: redirect-target check no longer false-positives when an action.yml path merely appears in text after an unrelated `2>&1` — branch `loop/bootstrap` — fixed + regression test (24 tests pass)
