@@ -58,6 +58,7 @@ jobs:
             raw.githubusercontent.com:443
             registry.npmjs.org:443
             nodejs.org:443
+            claude.ai:443
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -133,6 +134,7 @@ jobs:
             raw.githubusercontent.com:443
             registry.npmjs.org:443
             nodejs.org:443
+            claude.ai:443
 
       - name: Checkout
         uses: actions/checkout@v4
