@@ -82,8 +82,16 @@ function bashTouchesActionFile(cmd) {
   // A mutation is either a known write tool applied to the file, or a shell
   // redirection (`>`/`>>`) whose target is an action.yml path.
   if (/(^|\s)(sed\s+-i|tee|cp|mv|touch|rm)\b/.test(cmd)) return true;
-  const redirectTargets = cmd.split(/>>?/).slice(1);
-  return redirectTargets.some(t => ACTION_FILE_RE.test(t));
+  // A redirection mutates an action file only if the file is the *target* of a
+  // `>`/`>>` — i.e. the first token right after the operator. Matching the
+  // whole tail would false-positive on any command that merely mentions the
+  // path after an unrelated redirect (e.g. a `2>&1` earlier in the line).
+  const redirectRe = />>?\s*([^\s'"|&;]+)/g;
+  let r;
+  while ((r = redirectRe.exec(cmd)) !== null) {
+    if (ACTION_FILE_RE.test(r[1])) return true;
+  }
+  return false;
 }
 
 // Pure decision function. Returns { block, reason }.

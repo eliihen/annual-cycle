@@ -64,4 +64,9 @@ describe('composite-action API protection', () => {
     expect(evaluate(bash('cat .github/actions/build/action.yml'), noEnv).block).toBe(false);
     expect(evaluate(bash('grep name .github/actions/build/action.yml'), noEnv).block).toBe(false);
   });
+  it('does not false-positive when the path only appears in text after an unrelated redirect', () => {
+    // A gh pr create whose body mentions the path, with 2>&1 earlier in the line.
+    const cmd = 'git push 2>&1; gh pr create --body "touches .github/actions/build/action.yml? no" 2>&1 | tail -3';
+    expect(evaluate(bash(cmd), noEnv).block).toBe(false);
+  });
 });
