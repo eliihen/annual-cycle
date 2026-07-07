@@ -12,6 +12,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-07 — Bootstrap loop-engineering architecture (skills, agents, hooks, cloud triage workflow, state file) — branch `loop/bootstrap` — PR in review
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — [PR #3](https://github.com/eliihen/annual-cycle/pull/3), branch `loop/rm-unused-import` — full explorer(haiku)→implementer(sonnet,worktree)→verifier(opus) chain, VERDICT: APPROVE, PR opened
 - 2026-07-07 — Harden PreToolUse guard: redirect-target check no longer false-positives when an action.yml path merely appears in text after an unrelated `2>&1` — branch `loop/bootstrap` — fixed + regression test (24 tests pass)
+- 2026-07-07 — Prompt-injection hardening (security review response): guard egress + secret-reference denylists; untrusted-data framing + author trust boundary in triage skill, verifier agent, and loop-triage.yml; threat model written to docs/loop-decisions.md — branch `loop/bootstrap` — 33 tests pass, lint clean
 
 ## In progress
 
