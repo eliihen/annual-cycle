@@ -66,6 +66,14 @@ describe('processTasks', () => {
     expect(task.endFrac).toBeCloseTo(4 / 52);
   });
 
+  it('omits tasks with neither start_week nor start_month instead of defaulting to month 1', () => {
+    const tasks = processTasks({
+      '../tasks/undated.md': mod({ title: 'Undated' }),
+      '../tasks/dated.md':   mod({ title: 'Dated', start_month: 2, end_month: 3 }),
+    });
+    expect(tasks.map(t => t.title)).toEqual(['Dated']);
+  });
+
   it('expands a monthly repeat into multiple instances', () => {
     const tasks = processTasks({
       '../tasks/standup.md': mod({ title: 'Standup', start_month: 1, end_month: 1, repeat: 'quarterly' }),

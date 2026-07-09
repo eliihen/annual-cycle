@@ -55,6 +55,9 @@ function loadTasks(dir) {
     .filter(f => f.endsWith('.md'))
     .flatMap(file => {
       const { data } = matter(fs.readFileSync(path.join(dir, file), 'utf-8'));
+      // Mirrors the omission rule in src/utils/tasks.js: no start_week or
+      // start_month means no sensible position, so skip the task entirely.
+      if (data.start_week == null && data.start_month == null) return [];
       const hasWeeks = data.start_week != null;
       const sm = parseInt(data.start_month) || 1;
       const em = parseInt(data.end_month)   || sm;

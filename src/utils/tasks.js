@@ -105,6 +105,11 @@ export function processTasks(modules) {
     const data = mod.default?.frontmatter ?? {};
     const html = mod.default?.html ?? '';
 
+    // A task needs an explicit start_week or start_month to be placeable on
+    // the wheel — without one there's no sensible position, so it's omitted
+    // entirely rather than silently defaulting onto month 1.
+    if (data.start_week == null && data.start_month == null) return null;
+
     const hasWeeks = data.start_week != null;
     const sm = parseInt(data.start_month) || 1;
     const em = parseInt(data.end_month)   || sm;
@@ -134,7 +139,7 @@ export function processTasks(modules) {
       endFrac,
       html,
     };
-  }).flatMap(expandRepeats).sort((a, b) => a.startFrac - b.startFrac);
+  }).filter(Boolean).flatMap(expandRepeats).sort((a, b) => a.startFrac - b.startFrac);
 
   return assignRings(tasks).map(t => ({
     ...t,
