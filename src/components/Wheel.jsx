@@ -397,7 +397,11 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
             // Angular inset trimmed off each end of the visible arc (see annularSector).
             // The label's curved baseline must use the same bounds, otherwise its edge
             // characters are centered into the gap and spill outside the colored shape.
-            const gapDeg   = 2;
+            // Scaled to the arc's own span (capped at 2°) so short week-based tasks
+            // (e.g. a 1–2 week span) aren't disproportionately trimmed down to a
+            // sliver — adjacent short arcs stay close to touching instead of being
+            // pulled apart by a fixed-size gap.
+            const gapDeg   = Math.max(0.4, Math.min(2, spanDeg * 0.08));
             const d        = annularSector(outer, inner, startDeg, endDeg, gapDeg);
             const isActive = task.id === activeId;
             const rangeLabel = task.unit === 'week'
