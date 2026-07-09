@@ -74,24 +74,26 @@ function overlap(a, b) {
   return !(a.endFrac <= b.startFrac || b.endFrac <= a.startFrac);
 }
 
+// Greedy first-fit into concentric rings. No cap on ring count — when more
+// than 4 tasks mutually overlap, additional rings are added rather than
+// stacking tasks on top of each other (which made labels unreadable). The
+// renderer shrinks each ring's band width to fit however many rings a given
+// year actually needs.
 export function assignRings(tasks) {
-  const MAX_RINGS = 4;
   const rings = [];
   return tasks.map(t => {
     const slot = { startFrac: t.startFrac, endFrac: t.endFrac };
     let ring = -1;
-    for (let r = 0; r < rings.length && r < MAX_RINGS; r++) {
+    for (let r = 0; r < rings.length; r++) {
       if (!rings[r].some(s => overlap(s, slot))) {
         rings[r].push(slot);
         ring = r;
         break;
       }
     }
-    if (ring === -1 && rings.length < MAX_RINGS) {
+    if (ring === -1) {
       ring = rings.length;
       rings.push([slot]);
-    } else if (ring === -1) {
-      ring = MAX_RINGS - 1;
     }
     return { ...t, ring };
   });

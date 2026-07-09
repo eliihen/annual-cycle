@@ -15,7 +15,11 @@ const TASK_OUTER_START = 418; // outer edge of ring 0 (4 px gap from OUTER_R)
 const TASK_BAND        = 74;
 const TASK_GAP         = 4;
 const CENTER_R         = 95;
-const MAX_RINGS        = 4;
+const BASE_RING_COUNT  = 4;
+// Total radial space reserved for the 4-ring layout — kept as a constant so
+// years that need more than 4 rings shrink their bands to fit this same
+// space instead of overlapping (or growing past the center circle).
+const BASE_RING_SPACE  = BASE_RING_COUNT * TASK_BAND + (BASE_RING_COUNT - 1) * TASK_GAP;
 
 // Text radii (midpoints of each sub-ring)
 const WEEK_DATE_R  = (OUTER_R + WEEK_SPLIT_R) / 2;    // ≈ 432
@@ -63,9 +67,19 @@ function annularSector(outerR, innerR, startDeg, endDeg, gapDeg = 1.2) {
   ].join(' ');
 }
 
-function ringRadii(ring) {
-  const outer = TASK_OUTER_START - ring * TASK_BAND;
-  const inner = outer - TASK_BAND + TASK_GAP;
+// Band width for a wheel that needs `ringCount` rings. Reduces to the fixed
+// TASK_BAND when ringCount <= 4 (the common case); shrinks proportionally
+// beyond that so extra rings fit in the same total space rather than
+// overlapping.
+function ringBand(ringCount) {
+  const n = Math.max(ringCount, BASE_RING_COUNT);
+  return (BASE_RING_SPACE - (n - 1) * TASK_GAP) / n;
+}
+
+function ringRadii(ring, ringCount) {
+  const band  = ringBand(ringCount);
+  const outer = TASK_OUTER_START - ring * (band + TASK_GAP);
+  const inner = outer - band;
   return { outer, inner };
 }
 
@@ -242,6 +256,7 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
   const curWeek  = isCurrentYear ? isoWeek(now) : -1;
   const weekLabels = buildWeekLabels(year);
   const { transform, onPointerDown, onPointerMove, onPointerUp, resetZoom, zoomBy } = useZoomPan(svgRef);
+  const ringCount = tasks.reduce((max, t) => Math.max(max, (t.ring ?? 0) + 1), BASE_RING_COUNT);
 
   return (
     <div className="wheel-container">
@@ -372,7 +387,7 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
 
           {/* ── Task arcs ── */}
           {tasks.map(task => {
-            const { outer, inner } = ringRadii(task.ring ?? 0);
+            const { outer, inner } = ringRadii(task.ring ?? 0, ringCount);
             if (inner < CENTER_R + 4) return null;
 
             const color    = task.displayColor;

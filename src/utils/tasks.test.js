@@ -41,10 +41,10 @@ describe('assignRings', () => {
     expect(rings.map(r => r.ring)).toEqual([0, 1]);
   });
 
-  it('overflows a 5th mutually-overlapping task into the innermost ring (3)', () => {
+  it('adds a 5th ring for a 5th mutually-overlapping task instead of overlapping it', () => {
     const overlapping = Array.from({ length: 5 }, () => ({ startFrac: 0.1, endFrac: 0.9 }));
     const rings = assignRings(overlapping);
-    expect(rings.map(r => r.ring)).toEqual([0, 1, 2, 3, 3]);
+    expect(rings.map(r => r.ring)).toEqual([0, 1, 2, 3, 4]);
   });
 });
 
