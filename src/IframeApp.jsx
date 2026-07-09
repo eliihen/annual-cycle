@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Wheel from './components/Wheel.jsx';
 import { processTasks } from './utils/tasks.js';
 
