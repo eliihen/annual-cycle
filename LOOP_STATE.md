@@ -14,7 +14,8 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 ## In progress
 
-_(none)_
+- 2026-07-09 — Remove unused `React` default imports across `src/**` (React 19 automatic JSX runtime) — explorer/implementer/verifier pipeline started.
+- 2026-07-09 — Bump `vite` 8.0.16→8.1.4 and `@vitejs/plugin-react` 6.0.2→6.0.3 (patch/minor) — explorer/implementer/verifier pipeline started.
 
 ## Backlog
 
@@ -27,3 +28,7 @@ _(none)_
 - 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` (React 19 automatic runtime) — [auto-fixable] — low priority style cleanup; safe to batch.
 - 2026-07-07 — Dep drift (triage `npm outdated`): `@vitejs/plugin-react` 6.0.2→6.0.3 (patch), `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bumps; batch after dry run.
 - 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
+- 2026-07-09 — triage: CI health check — all workflow runs on `main` since 2026-07-07 green; one transient "Loop – daily triage & auto-fix" failure (2026-07-09T07:32) already resolved by merged PR #11 (`id-token: write` permission fix). No action needed.
+- 2026-07-09 — triage: Issue #1 and PR #2 unchanged (still open, awaiting human review/merge). No TODO/FIXME markers found in `src/`, `tasks/`, `scripts/`.
+- 2026-07-09 — triage: confirmed the `categoryColor` unused-import Backlog line above is now stale — fix already landed on `main`. Do not re-select it.
+- 2026-07-09 — triage: dep drift refreshed — `vite` 8.0.16→8.1.4 (was →8.1.3), `@vitejs/plugin-react` 6.0.2→6.0.3 unchanged — [auto-fixable] — same tracked item, just a newer patch on `vite`.
