@@ -20,6 +20,7 @@ permissions:
   contents: write        # create branches / commits
   pull-requests: write   # open PRs
   issues: read           # read the backlog from issues
+  id-token: write        # required by claude-code-action to fetch an OIDC token
 
 concurrency:
   group: loop-triage
