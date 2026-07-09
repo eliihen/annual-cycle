@@ -16,6 +16,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 - 2026-07-09 — Remove unused `React` default imports across `src/**` (React 19 automatic JSX runtime) — explorer/implementer/verifier pipeline started.
 - 2026-07-09 — Bump `vite` 8.0.16→8.1.4 and `@vitejs/plugin-react` 6.0.2→6.0.3 (patch/minor) — explorer/implementer/verifier pipeline started.
+- 2026-07-09 — Fixed `.gitignore`: actual isolation-worktree path is `.claude/worktrees/`, but only `.worktrees/` was ignored, causing Stop-hook untracked-file complaints on every implementer run — added `.claude/worktrees/`.
 
 ## Backlog
 
