@@ -46,7 +46,7 @@ jobs:
           IFRAME_LINK_TARGET: https://eliihen.github.io/annual-cycle/
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist/
           overwrite: true
