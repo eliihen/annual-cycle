@@ -21,6 +21,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-13 — Bump `eslint` 10.6.0→10.7.0 (patch) — explorer/implementer/verifier chain running
 - 2026-07-13 — Issue #16: add `.github/dependabot.yml` — explorer/implementer/verifier chain running
 - 2026-07-13 — Rename `eslint.config.js` → `eslint.config.mjs` to silence Node ESM-reparse warning — explorer/implementer/verifier chain running
+- 2026-07-13 — Housekeeping: `.gitignore` had `.worktrees/` but the Agent tool's `isolation: worktree` actually creates worktrees under `.claude/worktrees/`, leaving them untracked and tripping the Stop hook — added `.claude/worktrees/` to `.gitignore`
 
 ## Backlog
 
