@@ -1,22 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import matter from 'gray-matter';
-import { marked } from 'marked';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { markdownPlugin } from './src/lib/vitePlugin.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-function markdownPlugin() {
-  return {
-    name: 'markdown-tasks',
-    transform(src, id) {
-      if (!id.endsWith('.md')) return null;
-      const { data, content } = matter(src);
-      return `export default ${JSON.stringify({ frontmatter: data, html: marked(content) })}`;
-    },
-  };
-}
 
 // Consumers set BASE_PATH=/<repo-name>/ via the reusable workflow; falls back to
 // the default path for this repo's own deployment.
