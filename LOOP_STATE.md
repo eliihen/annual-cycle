@@ -11,6 +11,8 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 - 2026-07-07 — Bootstrap loop-engineering architecture (skills, agents, hooks, cloud triage workflow, state file) — branch `loop/bootstrap` — in review
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — branch `loop/rm-unused-import` — PR opened, verifier APPROVE
+- 2026-07-16 — Issue #17: Fix missing/overflowing wheel arc labels (`wrapLabel()` word truncation + fallback label for tiny arcs in `src/components/Wheel.jsx`) — branch `loop/fix-wheel-label-rendering`, PR [#29](https://github.com/eliihen/annual-cycle/pull/29) — verifier APPROVE, PR opened
+- 2026-07-16 — Dep drift: bump `vite` 8.1.4→8.1.5 (patch) — branch `loop/bump-vite-8-1-5`, PR [#28](https://github.com/eliihen/annual-cycle/pull/28) — verifier APPROVE, PR opened
 
 ## In progress
 
@@ -26,4 +28,13 @@ _(none)_
 - 2026-07-07 — Unused import `categoryColor` in `src/App.jsx:4` (surfaced by new linter) — [auto-fixable] — SELECTED for Phase-7 dry run.
 - 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` (React 19 automatic runtime) — [auto-fixable] — low priority style cleanup; safe to batch.
 - 2026-07-07 — Dep drift (triage `npm outdated`): `@vitejs/plugin-react` 6.0.2→6.0.3 (patch), `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bumps; batch after dry run.
-- 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
+- 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable. UPDATE 2026-07-16: now tracked by open PR #27 (Dependabot, 12.0.2→18.0.6).
+- 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. — RESOLVED — `npm run lint` is clean as of 2026-07-16 (fixed via commit `8bce58b` "Remove unused React default imports"). No action needed.
+- 2026-07-07 — Dep drift: `@vitejs/plugin-react` 6.0.2→6.0.3, `vite` 8.0.16→8.1.3 — RESOLVED/SUPERSEDED — bumped to vite 8.1.4 / plugin-react 6.0.3 via commit `65fbd46`. See new vite drift entry below (8.1.4→8.1.5).
+- 2026-07-16 — Issue #18: "Make proper GitHub actions" (rewrite composite actions in `.github/actions/` to proper Actions bundling all deps, no `npm ci` at buildtime) — [needs-human] — GH label says "auto-fixable" but this touches `.github/actions/*/action.yml` interfaces and is an architectural rewrite; excluded from auto-fix per triage rule, flagging for human scoping.
+- 2026-07-16 — Issue #17: "Text rendering issues" — some small wheel items render with no text, some overflow due to long unbreakable words — [auto-fixable] — DONE this run, see PR #29 in `## Done`.
+- 2026-07-16 — Issue #15: "Implement a react library" (publish npm package, on-demand markdown import mechanism) — [needs-human] — GH label says "auto-fixable" but this is a large API/build-mechanism redesign, not a small diff.
+- 2026-07-16 — PR #27: Dependabot "Bump marked from 12.0.2 to 18.0.6" (branch `dependabot/npm_and_yarn/marked-18.0.6`) — [needs-human] — major version, breaking-change risk; awaiting human review/merge.
+- 2026-07-16 — PR #25: Dependabot "Bump actions/deploy-pages from 4 to 5" (branch `dependabot/github_actions/actions/deploy-pages-5`) — [needs-human] — major version workflow-action bump; awaiting human review/merge.
+- 2026-07-16 — PR #24: Dependabot "Bump actions/upload-pages-artifact from 3 to 5" (branch `dependabot/github_actions/actions/upload-pages-artifact-5`) — [needs-human] — major version workflow-action bump; awaiting human review/merge.
+- 2026-07-16 — Dep drift (triage `npm outdated`): `vite` 8.1.4→8.1.5 (patch) — [auto-fixable] — DONE this run, see PR #28 in `## Done`.
