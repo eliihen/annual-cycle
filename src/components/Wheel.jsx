@@ -98,7 +98,10 @@ function wrapLabel(title, maxChars) {
       current = test;
     } else {
       if (current) lines.push(current);
-      current = word;
+      // A single word longer than maxChars can never be broken further by this
+      // wrapper — truncate it here so it doesn't slip through to `lines` (via
+      // the push above, on a later iteration) untruncated.
+      current = word.length > maxChars ? word.slice(0, maxChars - 1) + '…' : word;
     }
   }
   if (current) {
@@ -491,6 +494,19 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
                         {line}
                       </tspan>
                     ))}
+                  </text>
+                )}
+                {!useCurved && !useRadial && (
+                  // Arc too small for curved or radial text (even wrapped and trimmed
+                  // to fit): show a minimal indicator instead of no text at all. The
+                  // full title is still available via the arc's <title> tooltip.
+                  <text
+                    x={f(labelPos.x)} y={f(labelPos.y)}
+                    fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600"
+                    fill="white" pointerEvents="none" opacity="0.95" textAnchor="middle"
+                    dominantBaseline="middle"
+                  >
+                    …
                   </text>
                 )}
               </g>
