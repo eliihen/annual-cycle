@@ -11,6 +11,11 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 - 2026-07-07 — Bootstrap loop-engineering architecture (skills, agents, hooks, cloud triage workflow, state file) — branch `loop/bootstrap` — in review
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — branch `loop/rm-unused-import` — PR opened, verifier APPROVE
+- 2026-07-08 — Remove unused React default imports (React 19 automatic JSX runtime) — branch `loop/rm-unused-react-imports` — PR #12 merged
+- 2026-07-08 — Bump `vite` to 8.1.4 and `@vitejs/plugin-react` to 6.0.3 — branch `loop/bump-vite` — PR #13 merged
+- 2026-07-09 — Bump transitive `js-yaml` to 3.15.0 (fix GHSA-h67p-54hq-rp68) — branch `loop/bump-js-yaml` — PR #14 merged
+- 2026-07-09/13 — Add Dependabot config for npm and GitHub Actions; rename `eslint.config.js`→`.mjs`; bump eslint to 10.7.0; bump `actions/setup-node` 4→6 and `actions/checkout` 4→7 — PRs #19, #20, #21, #22, #23 merged
+- 2026-07-07 — Issue #1 / PR #2 (Vitest tooling) — resolved; Vitest suite (2 files, 24 tests) is live on `main` and green.
 
 ## In progress
 
@@ -21,9 +26,11 @@ _(none)_
 <!-- Seeded from GitHub state at bootstrap. triage appends here; check for
      duplicates before adding. -->
 
-- 2026-07-07 — Issue #1: No test coverage tooling configured — [needs-human] — superseded by open PR #2 and by the minimal Vitest setup added in `loop/bootstrap`; do not re-file. Close #1 once test tooling lands on `main`.
-- 2026-07-07 — PR #2: "Add Vitest testing and coverage tooling" (branch `claude/awesome-maxwell-5ifjig`) — [needs-human] — awaiting human review/merge; comprehensive suite that supersedes the bootstrap minimal setup.
-- 2026-07-07 — Unused import `categoryColor` in `src/App.jsx:4` (surfaced by new linter) — [auto-fixable] — SELECTED for Phase-7 dry run.
-- 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` (React 19 automatic runtime) — [auto-fixable] — low priority style cleanup; safe to batch.
-- 2026-07-07 — Dep drift (triage `npm outdated`): `@vitejs/plugin-react` 6.0.2→6.0.3 (patch), `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bumps; batch after dry run.
-- 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
+- 2026-07-16 — Triage run: CI green on `main` for every run since 2026-07-07 (one `Loop – daily triage & auto-fix` run failed 2026-07-09T07:32Z but was followed by passing runs; no action needed). `npm test` (24 passed) and `npm run lint` both clean on current `main`. No TODO/FIXME markers in `src/`, `tasks/`, `scripts/`. `npm outdated` shows only the already-tracked `marked` major bump — **no auto-fixable items found this round**.
+- 2026-07-16 — PR #27: Dependabot "Bump marked from 12.0.2 to 18.0.6" — [needs-human] — supersedes the prior marked-drift note below; major version, review breaking changes before merge.
+- 2026-07-16 — PR #25: Dependabot "Bump actions/deploy-pages from 4 to 5" — [needs-human] — major version GitHub Action bump.
+- 2026-07-16 — PR #24: Dependabot "Bump actions/upload-pages-artifact from 3 to 5" — [needs-human] — major version GitHub Action bump.
+- 2026-07-16 — Issue #15: "Implement a react library as well" (publish wheel as npm React component) — [needs-human] — large feature, changes the markdown-import mechanism; needs design discussion.
+- 2026-07-16 — Issue #17: "Text rendering issues" (small wheel items missing text; long words overflow their box) — [needs-human] — real bug in `wrapLabel()`/label layout in `src/components/Wheel.jsx`, but fix needs visual verification in a browser; not safely auto-fixable without human review of the rendered wheel.
+- 2026-07-16 — Issue #18: "Make proper GitHub actions" (rewrite composite actions to standalone GitHub Actions, bundle deps so no `npm ci` at build time) — [needs-human] — touches `.github/actions/*/action.yml` public interface; explicitly excluded from auto-fixable scope.
+- 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — now tracked via Dependabot PR #27 above; superseded, do not re-file separately.
