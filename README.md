@@ -237,6 +237,71 @@ Clicking a task arc in the iframe navigates the top-level frame to your full sit
 
 ---
 
+## Using the React library
+
+The wheel is also published as a React component library on npm, so you can render it inside your own React app instead of (or alongside) the GitHub Pages deployment.
+
+```bash
+npm install @eliihen/annual-cycle
+```
+
+`react` and `react-dom` (v19+) are peer dependencies — you provide them from your own app.
+
+### Render the wheel
+
+The library exports the `Wheel` component and the `processTasks` helper. `Wheel` takes an array of already-processed tasks; `processTasks` turns raw Markdown modules into that array (computing fractional positions, ring assignment, repeat expansion, and category colors).
+
+```jsx
+import { useMemo, useState } from 'react';
+import { Wheel, processTasks } from '@eliihen/annual-cycle';
+
+// Task modules, keyed by path, each shaped `{ frontmatter, html }` —
+// see "Load your own tasks" below for how to produce these.
+import taskModules from './my-tasks.js';
+
+export function AnnualCycle() {
+  const tasks = useMemo(() => processTasks(taskModules), []);
+  const [activeId, setActiveId] = useState(null);
+  return (
+    <Wheel
+      tasks={tasks}
+      activeId={activeId}
+      onTaskClick={setActiveId}
+      year={new Date().getFullYear()}
+    />
+  );
+}
+```
+
+### Load your own tasks
+
+`processTasks` expects an object shaped like the output of Vite's [`import.meta.glob`](https://vite.dev/guide/features.html#glob-import) after each Markdown file has been transformed to `{ frontmatter, html }` — the "import on demand based on a configured path" mechanism. The library ships the same Markdown transform it uses internally as a Vite plugin, so you can point it at *your own* tasks directory:
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { markdownPlugin } from '@eliihen/annual-cycle/vite-plugin';
+
+export default defineConfig({
+  plugins: [react(), markdownPlugin()],
+});
+```
+
+```js
+// my-tasks.js — glob your own Markdown files from wherever they live
+const taskModules = import.meta.glob('./content/tasks/*.md', { eager: true });
+export default Object.fromEntries(
+  Object.entries(taskModules).map(([path, mod]) => [path, mod.default]),
+);
+```
+
+Each `tasks/*.md` file uses the same frontmatter fields documented under [Adding tasks](#adding-tasks). If your build tool isn't Vite, transform each Markdown file into `{ frontmatter, html }` yourself (e.g. with `gray-matter` + `marked`) and hand the resulting map to `processTasks`.
+
+> **Styling:** `Wheel` renders inline SVG and carries no CSS import of its own. Copy the wheel-related rules from [`src/index.css`](src/index.css) (or [`src/iframe.css`](src/iframe.css) for the minimal variant) into your app's stylesheet to match the reference look.
+
+---
+
 ## Advanced configuration
 
 All advanced options are optional. The defaults work for standard GitHub Pages setups.
@@ -365,16 +430,22 @@ src/
   components/
     Wheel.jsx       ← SVG wheel with zoom/pan and pinch support
     TaskCard.jsx    ← collapsible sidebar card
+  lib/
+    index.js        ← npm library entry — exports Wheel + processTasks
+    vitePlugin.js   ← shared Markdown→JSON Vite plugin (also exported to consumers)
   utils/
     tasks.js        ← task loading, ring assignment, category colors
   notify.js         ← Slack notification script (Node.js, no build step)
   index.css         ← main app styles
   iframe.css        ← iframe-only styles
 vite.config.js      ← Vite config with Markdown plugin and multi-page build
+vite.iframe.config.js ← iframe-only build (wheel with no chrome)
+vite.lib.config.js  ← library build → dist-lib/ (ESM + CJS, React externalized)
 .github/
   workflows/
     deploy-demo.yml          ← deploys this repo's own demo to GitHub Pages
     notify-slack-demo.yml    ← sends Slack notifications for this repo's own demo
+    publish-npm.yml          ← publishes the library to npm on GitHub Release
   actions/
     build/action.yml         ← composite action for consumers — build only
     deploy/action.yml        ← composite action for consumers — deploy a build's dist_path
