@@ -28,3 +28,4 @@ _(none)_
 - 2026-07-07 — Dep drift (triage `npm outdated`): `@vitejs/plugin-react` 6.0.2→6.0.3 (patch), `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bumps; batch after dry run.
 - 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
 - 2026-07-16 — Issue #15: Implement a React library — expose `Wheel` + `processTasks` + the markdown vite plugin as an installable package (new `src/lib/` entry, `vite.lib.config.js`, `package.json` exports) so consuming apps can import the wheel as a React component and point the markdown transform at their own `tasks/` path — [auto-fixable] — SELECTED, human authorized bypass of needs-human gating.
+- 2026-07-16 — Housekeeping: gitignore `.claude/worktrees/` (the actual path the implementer agent's `isolation: worktree` uses; the existing `.worktrees/` entry didn't match it, tripping the stop hook with untracked files) — [auto-fixable] — done.
