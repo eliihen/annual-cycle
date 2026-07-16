@@ -1,11 +1,48 @@
 {
-  "name": "annual-cycle",
+  "name": "@eliihen/annual-cycle",
   "version": "1.0.0",
   "description": "Årshjul – annual cycle tracker for recurring tasks",
-  "private": true,
+  "license": "MIT",
+  "author": "Eline Henriksen",
+  "homepage": "https://github.com/eliihen/annual-cycle#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eliihen/annual-cycle.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eliihen/annual-cycle/issues"
+  },
+  "keywords": [
+    "annual-cycle",
+    "årshjul",
+    "wheel",
+    "calendar",
+    "react",
+    "svg",
+    "visualization"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist-lib/annual-cycle.cjs",
+  "module": "./dist-lib/annual-cycle.js",
+  "exports": {
+    ".": {
+      "import": "./dist-lib/annual-cycle.js",
+      "require": "./dist-lib/annual-cycle.cjs"
+    },
+    "./vite-plugin": "./src/lib/vitePlugin.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist-lib",
+    "src/lib/vitePlugin.js"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build && vite build --config vite.iframe.config.js",
+    "build:lib": "vite build --config vite.lib.config.js",
+    "prepublishOnly": "npm run build:lib",
     "preview": "vite preview",
     "notify": "node src/notify.js",
     "notify:debug": "DRY_RUN=1 NOTIFY_PERIOD=all node src/notify.js",
@@ -16,6 +53,10 @@
   "dependencies": {
     "gray-matter": "^4.0.3",
     "marked": "^18.0.6",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "peerDependencies": {
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
