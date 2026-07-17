@@ -21,9 +21,6 @@ _(none)_
 <!-- Seeded from GitHub state at bootstrap. triage appends here; check for
      duplicates before adding. -->
 
-- 2026-07-07 — Issue #1: No test coverage tooling configured — [needs-human] — superseded by open PR #2 and by the minimal Vitest setup added in `loop/bootstrap`; do not re-file. Close #1 once test tooling lands on `main`.
-- 2026-07-07 — PR #2: "Add Vitest testing and coverage tooling" (branch `claude/awesome-maxwell-5ifjig`) — [needs-human] — awaiting human review/merge; comprehensive suite that supersedes the bootstrap minimal setup.
-- 2026-07-07 — Unused import `categoryColor` in `src/App.jsx:4` (surfaced by new linter) — [auto-fixable] — SELECTED for Phase-7 dry run.
-- 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` (React 19 automatic runtime) — [auto-fixable] — low priority style cleanup; safe to batch.
-- 2026-07-07 — Dep drift (triage `npm outdated`): `@vitejs/plugin-react` 6.0.2→6.0.3 (patch), `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bumps; batch after dry run.
-- 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
+- 2026-07-17 — Issue #18: "Make proper GitHub actions" (rewrite composite actions in `.github/actions/*` to proper Actions bundling deps) — [needs-human] — explicitly touches `.github/actions/*/action.yml` (public interface), which the loop's own auto-fixable criteria excludes regardless of the GitHub-side "auto-fixable" label; large-scope rewrite, not a single small diff.
+- 2026-07-17 — Issue #15: "Implement a react library as well" — tracked, not backlog — already has open PR #31 (`claude/issue-15-implementer-verifier-4phr6t`, CI green as of 2026-07-16T23:56) implementing it; awaiting human review/merge, do not re-file.
+- 2026-07-17 — Triage sweep: no new auto-fixable items found. `npm outdated` clean (gray-matter/marked/react/react-dom/vite/eslint all current), `npm test` (24/24) and `npm run lint` both clean, no TODO/FIXME/XXX/HACK in `src|tasks|scripts`, no failing CI runs on `main` since last watermark (2026-07-07). Prior backlog entries below this line have all resolved since 2026-07-07 and were removed as stale: Issue #1 (closed — Vitest tooling landed), PR #2 (closed unmerged — superseded by bootstrap's minimal Vitest setup), unused `categoryColor` import (shipped, see Done), unused-import lint warnings (fixed by commit `8bce58b`), `@vitejs/plugin-react`/`vite` patch/minor bumps (landed via `65fbd46`/`2224696`), `marked` major bump (landed via `761902f`).
