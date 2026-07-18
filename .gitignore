@@ -7,8 +7,6 @@ coverage/
 .claude/worktrees/
 loop-bootstrap-prompt.md
 
-# The bundled JS GitHub Actions ship their ncc-built dist/index.js committed
-# (GitHub Actions run node20 actions straight from the repo, no build step at
-# consume-time) — un-ignore them despite the blanket `dist/` rule above.
-!.github/actions/*/dist/
-!.github/actions/*/dist/**
+# The bundled JS GitHub Actions' ncc-built dist/index.js is not committed to
+# main — it's built and published on release tags by .github/workflows/release.yml.
+# The blanket `dist/` rule above already covers .github/actions/*/dist/.

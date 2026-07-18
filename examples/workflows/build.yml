@@ -24,7 +24,7 @@ jobs:
 
       - name: Build Annual Cycle
         id: build
-        uses: eliihen/annual-cycle/.github/actions/build@main
+        uses: eliihen/annual-cycle/.github/actions/build@v1
         # Optional overrides — see build-deploy's inputs for details.
         #
         # with:

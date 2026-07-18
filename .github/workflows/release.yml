@@ -1,0 +1,67 @@
+name: Release actions
+
+# Publishes the bundled JS actions on a release tag. Push a semver tag
+# (e.g. v1.0.0) on a commit of `main`; this builds the ncc bundles, commits
+# them onto the tag, moves the matching major alias (v1), and cuts a Release.
+# `main` itself never carries the built dist/.
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Semver tag to (re)build and release, e.g. v1.0.0
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: echo "name=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout ${{ steps.tag.outputs.name }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.name }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Build action bundles
+        run: |
+          npm ci
+          npm run build:actions
+
+      - name: Commit bundles and point release tags at the build
+        run: |
+          TAG="${{ steps.tag.outputs.name }}"
+          MAJOR="${TAG%%.*}"                       # v1.0.0 -> v1
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f .github/actions/*/dist
+          git commit -m "Build action bundles for ${TAG}"
+          git tag -f "${TAG}"
+          git tag -f "${MAJOR}"
+          git push -f origin "refs/tags/${TAG}"
+          git push -f origin "refs/tags/${MAJOR}"
+
+      - name: Create or update the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.tag.outputs.name }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --verify-tag --target "$(git rev-parse HEAD)"
+          else
+            gh release create "$TAG" --generate-notes --title "$TAG" --verify-tag
+          fi
