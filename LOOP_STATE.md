@@ -11,10 +11,11 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 - 2026-07-07 — Bootstrap loop-engineering architecture (skills, agents, hooks, cloud triage workflow, state file) — branch `loop/bootstrap` — in review
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — branch `loop/rm-unused-import` — PR opened, verifier APPROVE
+- 2026-07-18 — Issue #18: Make proper GitHub actions — converted `build` and `notify-slack` composite actions to bundled JS (`node20`) actions (ncc `dist/index.js` ships all deps; notify needs no clone/`npm ci` at consume-time); every input/output preserved, `ref` now a documented no-op; `deploy`/`build-deploy` left composite & untouched — branch `claude/issue-18-implementer-verifier-xsxokd` — implementer→verifier: **VERDICT APPROVE**; committed & pushed, no PR opened yet — [needs-human] (human-authorized `.github/actions/*/action.yml` edits)
 
 ## In progress
 
-- 2026-07-18 — Issue #18: Make proper GitHub actions — convert `build` and `notify-slack` composite actions to bundled JS (`node20`) actions (ncc-bundled `dist/index.js`), preserving every input/output; `deploy`/`build-deploy` left untouched — branch `worktree-agent-a9437c51cdaedf9cd` — [needs-human] (touches protected `.github/actions/*/action.yml`; human-authorized, approach pre-decided)
+_(none)_
 
 ## Backlog
 
