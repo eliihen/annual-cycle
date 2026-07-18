@@ -24,48 +24,19 @@ inputs:
     required: false
     default: ''
   ref:
-    description: annual-cycle tag, branch, or SHA to build from
+    description: >
+      Deprecated, no-op. This is now a JavaScript action, so the annual-cycle
+      version used is pinned by the @ref in this action's own `uses:`
+      reference (e.g. eliihen/annual-cycle/.github/actions/build@v2). Kept
+      only for backward compatibility with existing callers — setting it has
+      no effect.
     required: false
     default: main
 
 outputs:
   dist_path:
     description: Path to the built site files
-    value: ${{ steps.build.outputs.dist_path }}
 
 runs:
-  using: composite
-  steps:
-    - name: Checkout annual-cycle (build tooling)
-      uses: actions/checkout@v4
-      with:
-        repository: eliihen/annual-cycle
-        ref: ${{ inputs.ref }}
-        path: annual-cycle-src
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: npm
-        cache-dependency-path: annual-cycle-src/package-lock.json
-
-    - name: Install dependencies
-      working-directory: annual-cycle-src
-      shell: bash
-      run: npm ci
-
-    - name: Copy tasks into build tree
-      shell: bash
-      run: cp -r "${{ inputs.tasks_path }}" annual-cycle-src/tasks
-
-    - name: Build
-      id: build
-      working-directory: annual-cycle-src
-      shell: bash
-      env:
-        BASE_PATH: ${{ inputs.base_path || format('/{0}/', github.event.repository.name) }}
-        IFRAME_LINK_TARGET: ${{ inputs.site_url || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
-      run: |
-        npm run build
-        echo "dist_path=annual-cycle-src/dist" >> "$GITHUB_OUTPUT"
+  using: node20
+  main: dist/index.js

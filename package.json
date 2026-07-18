@@ -11,7 +11,8 @@
     "notify:debug": "DRY_RUN=1 NOTIFY_PERIOD=all node src/notify.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build:actions": "ncc build .github/actions/build/action-src/index.js -o .github/actions/build/dist && ncc build .github/actions/notify-slack/action-src/index.js -o .github/actions/notify-slack/dist"
   },
   "dependencies": {
     "gray-matter": "^4.0.3",
@@ -20,7 +21,10 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@actions/core": "^2.0.3",
+    "@actions/exec": "^2.0.0",
     "@eslint/js": "^10.0.1",
+    "@vercel/ncc": "^0.44.1",
     "@vitejs/plugin-react": "^6.0.3",
     "eslint": "^10.7.0",
     "globals": "^17.7.0",

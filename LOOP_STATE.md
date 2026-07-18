@@ -14,7 +14,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 ## In progress
 
-_(none)_
+- 2026-07-18 — Issue #18: Make proper GitHub actions — convert `build` and `notify-slack` composite actions to bundled JS (`node20`) actions (ncc-bundled `dist/index.js`), preserving every input/output; `deploy`/`build-deploy` left untouched — branch `worktree-agent-a9437c51cdaedf9cd` — [needs-human] (touches protected `.github/actions/*/action.yml`; human-authorized, approach pre-decided)
 
 ## Backlog
 
