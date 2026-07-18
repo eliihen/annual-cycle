@@ -49,7 +49,8 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f .github/actions/*/dist
-          git commit -m "Build action bundles for ${TAG}"
+          # Idempotent: a re-run whose rebuild is byte-identical has nothing to commit.
+          git diff --cached --quiet || git commit -m "Build action bundles for ${TAG}"
           git tag -f "${TAG}"
           git tag -f "${MAJOR}"
           git push -f origin "refs/tags/${TAG}"
