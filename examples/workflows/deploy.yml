@@ -39,7 +39,7 @@ jobs:
 
       - name: Build & deploy Annual Cycle
         id: build-deploy
-        uses: eliihen/annual-cycle/.github/actions/build-deploy@main
+        uses: eliihen/annual-cycle/.github/actions/build-deploy@v1
         # Optional overrides — the action auto-detects correct values for standard
         # GitHub Pages setups, so you only need these if you use a custom domain or
         # a non-default tasks directory.

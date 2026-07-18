@@ -6,7 +6,16 @@ import globals from 'globals';
 // a small project; the rules that matter are "no undefined vars" and
 // "no unused vars" so the loop's automated lint gate catches real mistakes.
 export default [
-  { ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'annual-cycle-src/**', '**/*.html'] },
+  {
+    ignores: [
+      'dist/**',
+      'coverage/**',
+      'node_modules/**',
+      'annual-cycle-src/**',
+      '**/*.html',
+      '.github/actions/**/dist/**',
+    ],
+  },
   js.configs.recommended,
   {
     files: ['src/**/*.{js,jsx}'],
@@ -42,5 +51,12 @@ export default [
     // notify.js is CommonJS (require/module.exports).
     files: ['src/notify.js', 'src/notify.test.js'],
     languageOptions: { sourceType: 'commonjs', globals: { ...globals.node } },
+  },
+  {
+    // Hand-written sources for the bundled (ncc) JS GitHub Actions. CommonJS,
+    // run standalone by Node under actions/runner — not part of the Vite app.
+    files: ['.github/actions/**/action-src/*.js'],
+    languageOptions: { ecmaVersion: 2023, sourceType: 'commonjs', globals: { ...globals.node } },
+    rules: { 'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }] },
   },
 ];

@@ -209,7 +209,7 @@ async function main() {
   const sendMonth   = explicitPeriod === 'month'   || explicitPeriod === 'all' || (!explicitPeriod && isFirstWeekOfMonth);
   const sendQuarter = explicitPeriod === 'quarter' || explicitPeriod === 'all' || (!explicitPeriod && isFirstWeekOfQuarter);
 
-  const tasks = loadTasks(path.join(__dirname, '..', 'tasks'));
+  const tasks = loadTasks(process.env.TASKS_DIR || path.join(__dirname, '..', 'tasks'));
 
   const sections = [];
 
@@ -250,7 +250,11 @@ async function main() {
   console.log('✓ Slack notification sent');
 }
 
-main().catch(err => {
-  console.error(err.message);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch(err => {
+    console.error(err.message);
+    process.exit(1);
+  });
+}
+
+module.exports = { main };

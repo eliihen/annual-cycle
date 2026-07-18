@@ -60,7 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: build-deploy
-        uses: eliihen/annual-cycle/.github/actions/build-deploy@main
+        uses: eliihen/annual-cycle/.github/actions/build-deploy@v1
 ```
 
 ### 4. Add your first task
@@ -210,7 +210,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: eliihen/annual-cycle/.github/actions/notify-slack@main
+      - uses: eliihen/annual-cycle/.github/actions/notify-slack@v1
         with:
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
           period: ${{ inputs.period || '' }}
@@ -241,7 +241,7 @@ Clicking a task arc in the iframe navigates the top-level frame to your full sit
 
 All advanced options are optional. The defaults work for standard GitHub Pages setups.
 
-`build-deploy`, `build`, `deploy`, and `notify-slack` are [composite actions](.github/actions/), not reusable workflows — each is a single step you drop into your own job. That means you can freely add your own steps before or after them in the same job (checkout, custom build steps, a deploy-elsewhere step, notifications, etc.).
+`build-deploy`, `build`, `deploy`, and `notify-slack` are [GitHub Actions](.github/actions/) (`build-deploy` and `deploy` are composite; `build` and `notify-slack` are bundled JavaScript), not reusable workflows — each is a single step you drop into your own job. That means you can freely add your own steps before or after them in the same job (checkout, custom build steps, a deploy-elsewhere step, notifications, etc.).
 
 ### Custom domain
 
@@ -251,7 +251,7 @@ If your site is served from a custom domain (e.g. `https://cycle.example.com/`),
 steps:
   - uses: actions/checkout@v4
   - id: build-deploy
-    uses: eliihen/annual-cycle/.github/actions/build-deploy@main
+    uses: eliihen/annual-cycle/.github/actions/build-deploy@v1
     with:
       base_path: /
       site_url: https://cycle.example.com/
@@ -265,14 +265,18 @@ If your tasks live somewhere other than `tasks/`:
 steps:
   - uses: actions/checkout@v4
   - id: build-deploy
-    uses: eliihen/annual-cycle/.github/actions/build-deploy@main
+    uses: eliihen/annual-cycle/.github/actions/build-deploy@v1
     with:
       tasks_path: content/annual-tasks
 ```
 
 ### Pinning to a specific version
 
-Replace `@main` with a tag to pin to a stable release:
+`main` is source-only — it doesn't ship the built action bundles, so it isn't
+meant to be referenced directly. Bundles are built and published on release
+tags (see [`.github/workflows/release.yml`](.github/workflows/release.yml)):
+use the rolling major tag (`@v1`) to automatically track the latest `v1.x.x`
+release, or pin to an exact version:
 
 ```yaml
 uses: eliihen/annual-cycle/.github/actions/build-deploy@v1.0.0
@@ -280,7 +284,7 @@ uses: eliihen/annual-cycle/.github/actions/build-deploy@v1.0.0
 
 ### Build without deploying to GitHub Pages
 
-`build-deploy` is a thin wrapper around two smaller composite actions,
+`build-deploy` is a thin wrapper around two smaller actions,
 [`build`](.github/actions/build/action.yml) and
 [`deploy`](.github/actions/deploy/action.yml). If you want to host the static
 site yourself (e.g. Netlify, S3, an internal server) instead of using GitHub
@@ -295,7 +299,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: build
-        uses: eliihen/annual-cycle/.github/actions/build@main
+        uses: eliihen/annual-cycle/.github/actions/build@v1
         with:
           tasks_path: tasks
       - name: Sync to S3
@@ -318,9 +322,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: build
-        uses: eliihen/annual-cycle/.github/actions/build@main
+        uses: eliihen/annual-cycle/.github/actions/build@v1
       - id: deploy
-        uses: eliihen/annual-cycle/.github/actions/deploy@main
+        uses: eliihen/annual-cycle/.github/actions/deploy@v1
         with:
           dist_path: ${{ steps.build.outputs.dist_path }}
 ```
@@ -375,11 +379,12 @@ vite.config.js      ← Vite config with Markdown plugin and multi-page build
   workflows/
     deploy-demo.yml          ← deploys this repo's own demo to GitHub Pages
     notify-slack-demo.yml    ← sends Slack notifications for this repo's own demo
+    release.yml              ← builds & publishes the action bundles on a version tag
   actions/
-    build/action.yml         ← composite action for consumers — build only
+    build/action.yml         ← bundled JS action for consumers — build only
     deploy/action.yml        ← composite action for consumers — deploy a build's dist_path
     build-deploy/action.yml  ← composite action for consumers — wraps build + deploy
-    notify-slack/action.yml  ← composite action for consumers — Slack digests
+    notify-slack/action.yml  ← bundled JS action for consumers — Slack digests
 ```
 
 ## License

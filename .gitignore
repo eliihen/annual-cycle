@@ -4,4 +4,9 @@ dist/
 coverage/
 # Loop worktrees created by the implementer agent (isolation: worktree)
 .worktrees/
+.claude/worktrees/
 loop-bootstrap-prompt.md
+
+# The bundled JS GitHub Actions' ncc-built dist/index.js is not committed to
+# main — it's built and published on release tags by .github/workflows/release.yml.
+# The blanket `dist/` rule above already covers .github/actions/*/dist/.

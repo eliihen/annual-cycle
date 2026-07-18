@@ -19,40 +19,15 @@ inputs:
     required: false
     default: tasks
   ref:
-    description: annual-cycle tag, branch, or SHA to use
+    description: >
+      Deprecated, no-op. This is now a JavaScript action, so the annual-cycle
+      version used is pinned by the @ref in this action's own `uses:`
+      reference (e.g. eliihen/annual-cycle/.github/actions/notify-slack@v2).
+      Kept only for backward compatibility with existing callers — setting it
+      has no effect.
     required: false
     default: main
 
 runs:
-  using: composite
-  steps:
-    - name: Checkout annual-cycle (notify script)
-      uses: actions/checkout@v4
-      with:
-        repository: eliihen/annual-cycle
-        ref: ${{ inputs.ref }}
-        path: annual-cycle-src
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: npm
-        cache-dependency-path: annual-cycle-src/package-lock.json
-
-    - name: Install dependencies
-      working-directory: annual-cycle-src
-      shell: bash
-      run: npm ci
-
-    - name: Copy tasks into build tree
-      shell: bash
-      run: cp -r "${{ inputs.tasks_path }}" annual-cycle-src/tasks
-
-    - name: Send Slack notification
-      working-directory: annual-cycle-src
-      shell: bash
-      run: node src/notify.js
-      env:
-        SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook_url }}
-        NOTIFY_PERIOD: ${{ inputs.period }}
+  using: node20
+  main: dist/index.js
