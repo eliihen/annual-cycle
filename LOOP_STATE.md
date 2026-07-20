@@ -11,19 +11,20 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 - 2026-07-07 — Bootstrap loop-engineering architecture (skills, agents, hooks, cloud triage workflow, state file) — branch `loop/bootstrap` — in review
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — branch `loop/rm-unused-import` — PR opened, verifier APPROVE
+- 2026-07-16 (landed on `main` by 2026-07-20) — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` — commit `8bce58b` "Remove unused React default imports" — `npm run lint` now clean
+- 2026-07-16 (landed on `main` by 2026-07-20) — Dep drift: `@vitejs/plugin-react`/`vite` patch+minor bumps — commit `65fbd46` "Bump vite to 8.1.4 and @vitejs/plugin-react to 6.0.3" (further bumped to vite 8.1.5 via `2224696`)
+- 2026-07-16 (landed on `main` by 2026-07-20) — Dep drift: `marked` 12.0.2→18.0.6 (major) — commit `761902f` "Bump marked from 12.0.2 to 18.0.6" — landed despite earlier `[needs-human]` tag; verify no runtime regressions if issues surface
+- 2026-07-09 — Issue #1 (test coverage tooling) — closed on GitHub; no longer open
+- 2026-07-09 — PR #2 "Add Vitest testing and coverage tooling" — closed without merging; superseded by the minimal Vitest setup from `loop/bootstrap`, which is on `main` (`npm test` — 24 tests passing across 2 files)
 
 ## In progress
 
-_(none)_
+- 2026-07-20 — Issue #18 "Make proper GitHub actions" — [needs-human] — open PR #32 "Convert build & notify-slack actions to bundled JavaScript" (branch `claude/issue-18-implementer-verifier-xsxokd`) awaiting human review/merge
+- 2026-07-20 — Issue #15 "Implement a react library as well" — [needs-human] — open PR #31 "Implement React library export with reusable Vite plugin" (branch `claude/issue-15-implementer-verifier-4phr6t`) awaiting human review/merge
 
 ## Backlog
 
 <!-- Seeded from GitHub state at bootstrap. triage appends here; check for
      duplicates before adding. -->
 
-- 2026-07-07 — Issue #1: No test coverage tooling configured — [needs-human] — superseded by open PR #2 and by the minimal Vitest setup added in `loop/bootstrap`; do not re-file. Close #1 once test tooling lands on `main`.
-- 2026-07-07 — PR #2: "Add Vitest testing and coverage tooling" (branch `claude/awesome-maxwell-5ifjig`) — [needs-human] — awaiting human review/merge; comprehensive suite that supersedes the bootstrap minimal setup.
-- 2026-07-07 — Unused import `categoryColor` in `src/App.jsx:4` (surfaced by new linter) — [auto-fixable] — SELECTED for Phase-7 dry run.
-- 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` (React 19 automatic runtime) — [auto-fixable] — low priority style cleanup; safe to batch.
-- 2026-07-07 — Dep drift (triage `npm outdated`): `@vitejs/plugin-react` 6.0.2→6.0.3 (patch), `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bumps; batch after dry run.
-- 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
+_(none — 2026-07-20 triage found no new items: CI on `main` is green for the last 10 runs, `npm test`/`npm run lint` pass clean, `npm outdated` reports nothing, and no TODO/FIXME markers in `src/`/`tasks/`/`scripts/`. The only open issues (#15, #18) already have PRs open (#31, #32) awaiting human review — see "In progress".)
