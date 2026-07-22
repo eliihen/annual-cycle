@@ -14,7 +14,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-09 — Remove unused React default imports (React 19 automatic runtime) — PR #12 — merged; resolves the 2026-07-07 lint-warnings backlog item.
 - 2026-07-09 — Bump vite 8.0.16→8.1.4 and @vitejs/plugin-react →6.0.3 — PR #13 — merged; resolves the 2026-07-07 vite dep-drift backlog item. Later bumped again to vite 8.1.5 via PR #28.
 - 2026-07-16 — Bump `marked` 12.0.2→18.0.6 (major) — PR #27 (dependabot) — merged; resolves the 2026-07-07 needs-human major-bump backlog item. `marked` is now on a patch-drift track instead (see Backlog).
-- 2026-07-22 — Bump `marked` 18.0.6→18.0.7, `react` 19.2.7→19.2.8, `react-dom` 19.2.7→19.2.8 (all patch) — branch `loop/bump-marked-react-patch` — PR opened, verifier APPROVE (npm test 24/24, lint clean, build clean for both configs).
+- 2026-07-22 — Bump `marked` 18.0.6→18.0.7, `react` 19.2.7→19.2.8, `react-dom` 19.2.7→19.2.8 (all patch) — branch `loop/bump-marked-react-patch`, PR #34 — verifier APPROVE (npm test 24/24, lint clean, build clean for both configs); awaiting merge.
 
 ## In progress
 
