@@ -26,4 +26,5 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 - 2026-07-23 — PR #33: Dependabot bump `actions/setup-node` 6→7 (major) — [needs-human] — CI green on `main`; major GH Action version bump, owner review required, not auto-fixable.
 - 2026-07-23 — PR #34: "Bump marked, react, react-dom (patch)" (branch `loop/bump-marked-react-patch`) — [needs-human] — loop-opened, verifier APPROVE per PR body, awaiting owner merge.
-- 2026-07-23 — Dep drift (triage `npm outdated`): `@vitejs/plugin-react` 6.0.3→6.0.4 (patch) — [auto-fixable] — safe patch bump, not covered by open PR #34. SELECTED for this run.
+- 2026-07-23 — Dep drift (triage `npm outdated`): `@vitejs/plugin-react` 6.0.3→6.0.4 (patch) — [auto-fixable] — safe patch bump, not covered by open PR #34. SELECTED for this run; explorer plan produced, implementer running in isolated worktree.
+- 2026-07-23 — `.gitignore` ignored `.worktrees/` but the implementer agent's isolation actually creates `.claude/worktrees/`, so its (locked, in-use) worktree directory was showing as untracked — [auto-fixable] — fixed by adding `.claude/worktrees/` to `.gitignore` (did not touch the running agent's worktree contents).
