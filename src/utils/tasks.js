@@ -101,6 +101,9 @@ export function assignRings(tasks) {
 
 export function processTasks(modules) {
   const tasks = Object.entries(modules).map(([filePath, mod]) => {
+    // Only cleans up to a clean slug when the glob path has a literal
+    // `tasks/` segment (as this repo's own `tasks/*.md` does); otherwise the
+    // id falls back to the full path with `.md` stripped.
     const id = filePath.replace(/^.*\/tasks\//, '').replace(/\.md$/, '');
     const data = mod.default?.frontmatter ?? {};
     const html = mod.default?.html ?? '';

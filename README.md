@@ -298,6 +298,8 @@ export default Object.fromEntries(
 
 Each `tasks/*.md` file uses the same frontmatter fields documented under [Adding tasks](#adding-tasks). If your build tool isn't Vite, transform each Markdown file into `{ frontmatter, html }` yourself (e.g. with `gray-matter` + `marked`) and hand the resulting map to `processTasks`.
 
+> **Folder name matters for task IDs:** `processTasks` derives each task's id from its glob path by stripping everything up to and including a literal `tasks/` segment (e.g. `./content/tasks/onboarding.md` → `onboarding`). Keep your directory named `tasks` (nested anywhere) to get clean ids; otherwise the id falls back to the full path with `.md` removed.
+
 > **Styling:** `Wheel` renders inline SVG and carries no CSS import of its own. Copy the wheel-related rules from [`src/index.css`](src/index.css) (or [`src/iframe.css`](src/iframe.css) for the minimal variant) into your app's stylesheet to match the reference look.
 
 ---
