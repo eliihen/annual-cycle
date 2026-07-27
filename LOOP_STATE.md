@@ -15,7 +15,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-27 (triage) — Confirmed via `npm outdated`/`package.json` that prior dep-drift backlog items are already resolved on `main` (merged outside this loop's own PRs, e.g. via dependabot): `vite` now `^8.1.5` (was 8.0.16, PR #28), `marked` now `^18.0.6` (was 12.0.2, PR #27), `eslint` now `10.7.0` (PR #26). Removing the corresponding stale Backlog entries below.
 - 2026-07-27 (triage) — Confirmed lint is clean (`npm run lint` — no output/warnings): the "unused React/MAX_RINGS lint warnings" backlog item is stale/resolved, removing it.
 - 2026-07-27 (triage) — Issue #1 (no test coverage tooling) is closed on GitHub; PR #2 was closed unmerged (superseded), and a minimal Vitest setup is live on `main` (`npm test` — 24/24 passing). Item fully resolved, removing stale Backlog entries for both.
-- 2026-07-27 — Bump `eslint` devDependency `^10.7.0` → `^10.8.0` and `globals` devDependency `^17.7.0` → `^17.8.0` (both patch) — branch `loop/bump-eslint-globals-patch` — `npm test` pass (24/24), `npm run lint` pass (18 files, 0 errors/warnings), `npm run build` pass (both index.html + iframe.html), verifier APPROVE, PR opened (see PR link once created)
+- 2026-07-27 — Bump `eslint` devDependency `^10.7.0` → `^10.8.0` and `globals` devDependency `^17.7.0` → `^17.8.0` (both patch) — branch `loop/bump-eslint-globals-patch`, PR opened https://github.com/eliihen/annual-cycle/pull/36 — verifier APPROVE, `npm test` pass (24/24), `npm run lint` pass (18 files, 0 errors/warnings), `npm run build` pass (both index.html + iframe.html)
 
 ## In progress
 
