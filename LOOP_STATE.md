@@ -12,6 +12,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-07 — Bootstrap loop-engineering architecture (skills, agents, hooks, cloud triage workflow, state file) — branch `loop/bootstrap` — in review
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — branch `loop/rm-unused-import` — PR opened, verifier APPROVE
 - 2026-07-23 — Bump `@vitejs/plugin-react` devDependency `^6.0.3` → `^6.0.4` (patch) — branch `loop/bump-vitejs-plugin-react-patch` — PR opened, verifier APPROVE
+- 2026-07-28 — `npm audit fix`: bump `brace-expansion` 5.0.7 → 5.0.8 (transitive dev dep, via eslint→minimatch), resolving high-severity DoS GHSA-mh99-v99m-4gvg — branch `claude/focused-cerf-dhu8jz` — verifier APPROVE, PR opened
 
 ## In progress
 
@@ -28,3 +29,6 @@ _(none)_
 - 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` (React 19 automatic runtime) — [auto-fixable] — low priority style cleanup; safe to batch.
 - 2026-07-07 — Dep drift (triage `npm outdated`): `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bump; batch after dry run. (`@vitejs/plugin-react` half of this finding shipped separately, see Done.)
 - 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
+- 2026-07-28 — Issue #15 "Implement a react library as well" — [needs-human] — already has open PR #31 "Implement React library export with reusable Vite plugin" (branch `claude/issue-15-implementer-verifier-4phr6t`) awaiting review; do not re-file.
+- 2026-07-28 — Issue #18 "Make proper GitHub actions" — [needs-human] — already has open PR #32 "Convert build & notify-slack actions to bundled JavaScript" (branch `claude/issue-18-implementer-verifier-xsxokd`) awaiting review; do not re-file.
+- 2026-07-28 — Redundant open PRs: loop PR #34 (bump marked/react/react-dom, patch) and PR #36 (bump eslint/globals, patch) are superseded by newer Dependabot PRs #37–#41 targeting slightly newer versions of the same packages — [needs-human] — merge/close decision to avoid conflicting bump PRs; not auto-fixable.
