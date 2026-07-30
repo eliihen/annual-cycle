@@ -12,6 +12,8 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-07 — Bootstrap loop-engineering architecture (skills, agents, hooks, cloud triage workflow, state file) — branch `loop/bootstrap` — in review
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — branch `loop/rm-unused-import` — PR opened, verifier APPROVE
 - 2026-07-23 — Bump `@vitejs/plugin-react` devDependency `^6.0.3` → `^6.0.4` (patch) — branch `loop/bump-vitejs-plugin-react-patch` — PR opened, verifier APPROVE
+- 2026-07-30 — Confirmed resolved (no action needed this run): Vitest test tooling landed on `main` (`npm test` passes, 24/24 tests); issue #1 closed 2026-07-10, PR #2 superseded/closed.
+- 2026-07-30 — Confirmed resolved: `vite` minor bump and `marked` 12.0.2→18.0.6 major bump (2026-07-07 backlog entries) both landed on `main` (PR #27 et al.); lint warnings for unused `React`/`MAX_RINGS` also clean now (`npm run lint` — 0 warnings).
 
 ## In progress
 
@@ -22,9 +24,12 @@ _(none)_
 <!-- Seeded from GitHub state at bootstrap. triage appends here; check for
      duplicates before adding. -->
 
-- 2026-07-07 — Issue #1: No test coverage tooling configured — [needs-human] — superseded by open PR #2 and by the minimal Vitest setup added in `loop/bootstrap`; do not re-file. Close #1 once test tooling lands on `main`.
-- 2026-07-07 — PR #2: "Add Vitest testing and coverage tooling" (branch `claude/awesome-maxwell-5ifjig`) — [needs-human] — awaiting human review/merge; comprehensive suite that supersedes the bootstrap minimal setup.
-- 2026-07-07 — Unused import `categoryColor` in `src/App.jsx:4` (surfaced by new linter) — [auto-fixable] — SELECTED for Phase-7 dry run.
-- 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` (React 19 automatic runtime) — [auto-fixable] — low priority style cleanup; safe to batch.
-- 2026-07-07 — Dep drift (triage `npm outdated`): `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bump; batch after dry run. (`@vitejs/plugin-react` half of this finding shipped separately, see Done.)
-- 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
+- 2026-07-30 — `npm audit`: 1 high-severity `brace-expansion` DoS via `eslint`→`minimatch` (GHSA-mh99-v99m-4gvg) — [auto-fixable] — already covered by open PR #42 (`npm audit fix`, no `--force`; verifier APPROVE); awaiting human merge, not re-filing.
+- 2026-07-30 — Dep drift (`npm outdated`): `eslint` 10.7.0→10.8.0, `globals` 17.7.0→17.8.0 (patch) — [auto-fixable] — already covered by open PR #36 (mergeable_state: dirty, needs rebase) and duplicated by dependabot PRs #39/#40; awaiting human to resolve/merge, not re-filing.
+- 2026-07-30 — Dep drift: `marked` 18.0.6→18.0.7, `react`/`react-dom` 19.2.7→19.2.8 (patch) — [auto-fixable] — already covered by open PR #34 (mergeable_state: dirty, needs rebase) and duplicated by dependabot PRs #37/#38/#41; awaiting human to resolve/merge, not re-filing.
+- 2026-07-30 — Issue #18 "Make proper GitHub actions" (rewrite composite actions to bundled JS actions) — [needs-human] — touches `.github/actions/*/action.yml` composite-action interfaces, excluded from auto-fixable by project convention; open PR #32 already implements it, awaiting human review.
+- 2026-07-30 — Issue #15 "Implement a react library" (npm-publishable React component export) — [needs-human] — large feature surface, not a single small diff; open PR #31 already implements it, awaiting human review.
+- 2026-07-30 — CI health: last 15 workflow runs on `main` all green (CI, Build & Deploy, dependabot updates) — no failures since previous triage pass.
+- 2026-07-30 — TODO/FIXME/XXX/HACK scan of `src/`, `tasks/`, `scripts/`: none found.
+
+No new auto-fixable items were pushed through explorer → implementer → verifier this run: every current finding is already tracked by an open PR (#31, #32, #34, #36, #37–#42) awaiting human merge, or is tagged `[needs-human]`.
