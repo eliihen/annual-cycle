@@ -317,24 +317,28 @@ npm install @eliihen/annual-cycle
 
 Docusaurus 3.10 declares `react: ^18 || ^19` and its `classic` template installs React 19, which satisfies this package's `^19.2.7` peer range — no `--legacy-peer-deps` needed.
 
-### 2. Add a barrel that adapts Docusaurus's Markdown modules
+### 2. Build the task list once, in a barrel
 
 Put your task Markdown in `src/tasks/` (same frontmatter as [Adding tasks](#adding-tasks)) alongside an `index.js`.
 
-Docusaurus's loader hands back a *different shape* than `processTasks` expects, so the barrel's job is to translate:
+Docusaurus's loader hands back a *different shape* than `processTasks` expects, so the barrel translates it:
 
 | | Vite plugin (this repo) | Docusaurus loader |
 |---|---|---|
 | `default` | `{ frontmatter, html }` | a React component |
 | frontmatter | `default.frontmatter` | top-level **`frontMatter`** (capital M) |
 
+Do the translating, the `processTasks` call, and the description wiring here — so everything downstream receives one finished array:
+
 ```js
 // src/tasks/index.js
+import { processTasks } from '@eliihen/annual-cycle';
+
 // require.context globs every .md in this folder at build time.
 const ctx = require.context('./', false, /\.md$/);
 
-export const modules = {};
-export const bodies = {};
+const modules = {};
+const bodies = {};
 
 for (const key of ctx.keys()) {
   const mod = ctx(key);
@@ -343,61 +347,61 @@ for (const key of ctx.keys()) {
   modules[key.replace('./', './tasks/')] = {
     default: { frontmatter: mod.frontMatter, html: '' },
   };
-  // The task description, compiled by Docusaurus to a React component.
+  // Docusaurus compiles the Markdown body to a React component.
   bodies[key.replace('./', '').replace(/\.md$/, '')] = mod.default;
 }
 
-export default modules;
+// Attach each description to its task, so consumers get one self-contained
+// array. Repeat instances (`--r2`, `--r3`, …) share the description of the
+// task they were expanded from.
+export default processTasks(modules).map((task) => ({
+  ...task,
+  Body: bodies[task.id.replace(/--r\d+$/, '')],
+}));
 ```
 
-**Why `html` is empty, and how to render descriptions anyway.** `processTasks` carries an `html` string on every task, but Docusaurus compiles Markdown bodies to React components rather than HTML strings, so there is nothing to put there. That is not a loss — it's an upgrade. Keep the component in the `bodies` map above and render it directly (step 3), and your task descriptions get the full Docusaurus treatment: admonitions, syntax-highlighted code, internal links, and any MDX components you've registered — none of which survive an HTML string. `Wheel` itself never reads `html`, so leaving it empty costs nothing.
+`processTasks` returns plain objects, so any extra field you attach — `Body` here — rides along untouched and stays available on every task.
+
+**On `html`.** `processTasks` puts an `html` string on each task, but Docusaurus compiles Markdown bodies to React components, not HTML strings, so there is nothing to put there. That's an upgrade rather than a loss: rendering the component gives your descriptions the full Docusaurus treatment — admonitions, syntax-highlighted code, internal links, and any MDX components you've registered — none of which survive an HTML string. `Wheel` itself never reads `html`.
 
 > **Skip the adapter and you get an empty wheel, not an error.** Passing Docusaurus's modules straight through leaves `mod.default.frontmatter` undefined, so `processTasks` drops every task and the site still builds — a silent failure.
 
 <details>
 <summary>Prefer explicit imports over <code>require.context</code>?</summary>
 
-`require.context` is a webpack/Rspack API. To stay bundler-agnostic, list the files instead — the adapter is the same:
+`require.context` is a webpack/Rspack API. To stay bundler-agnostic, list the files instead — everything else is the same:
 
 ```js
+import { processTasks } from '@eliihen/annual-cycle';
 import * as boardMeeting from './board-meeting.md';
 import * as securityAudit from './security-audit.md';
 
 const adapt = (mod) => ({ default: { frontmatter: mod.frontMatter, html: '' } });
-
-export const bodies = {
+const bodies = {
   'board-meeting': boardMeeting.default,
   'security-audit': securityAudit.default,
 };
 
-export default {
+export default processTasks({
   './tasks/board-meeting.md': adapt(boardMeeting),
   './tasks/security-audit.md': adapt(securityAudit),
-};
+}).map((task) => ({ ...task, Body: bodies[task.id.replace(/--r\d+$/, '')] }));
 ```
 
 </details>
 
 ### 3. Add a wrapper component
 
-`Wheel` is interactive, so it needs state for the selected task. Take the task modules as a prop so the same wrapper works on any page, and render the clicked task's description from the `bodies` map:
+`Wheel` is interactive, so it needs state for the selected task. The wrapper takes the finished task array as its only data prop — the same contract `Wheel` itself has, and the same thing [`src/App.jsx`](src/App.jsx) passes:
 
 ```jsx
 // src/components/AnnualCycle.js
-import React, { useMemo, useState } from 'react';
-import { Wheel, processTasks } from '@eliihen/annual-cycle';
+import React, { useState } from 'react';
+import { Wheel } from '@eliihen/annual-cycle';
 
-export default function AnnualCycle({
-  tasks: taskModules,
-  bodies = {},
-  year = new Date().getFullYear(),
-}) {
-  const tasks = useMemo(() => processTasks(taskModules), [taskModules]);
+export default function AnnualCycle({ tasks, year = new Date().getFullYear() }) {
   const [activeId, setActiveId] = useState(null);
-
   const active = tasks.find((t) => t.id === activeId);
-  // Repeat instances get `--r2`, `--r3`, … suffixes; they share one description.
-  const Body = activeId ? bodies[activeId.replace(/--r\d+$/, '')] : null;
 
   return (
     <>
@@ -405,7 +409,7 @@ export default function AnnualCycle({
       {active && (
         <div className="task-detail">
           <h3>{active.title}</h3>
-          {Body ? <Body /> : null}
+          {active.Body ? <active.Body /> : null}
         </div>
       )}
     </>
@@ -425,14 +429,14 @@ title: Annual cycle
 ---
 
 import AnnualCycle from '@site/src/components/AnnualCycle';
-import tasks, { bodies } from '@site/src/tasks';
+import tasks from '@site/src/tasks';
 
 # Our annual cycle
 
-<AnnualCycle year={2026} tasks={tasks} bodies={bodies} />
+<AnnualCycle year={2026} tasks={tasks} />
 ```
 
-> Use a **default import** for the task map (`import tasks from …`), not `import * as tasks from …`. The namespace form would give you `{ default: modules }` and, in a barrel that used named exports instead, the keys would be JS identifiers rather than paths — which is what the task ids are derived from.
+> Use a **default import** (`import tasks from …`), not `import * as tasks from …` — the namespace form would give you `{ default: tasks }`.
 
 `npm run build` then prerenders the full SVG into the static HTML, and it hydrates without errors.
 
@@ -440,7 +444,7 @@ import tasks, { bodies } from '@site/src/tasks';
 
 - **No `<BrowserOnly>` needed.** `Wheel` touches the DOM only inside `useEffect`/event handlers, so it server-renders cleanly and the wheel is present in the prerendered HTML (good for no-JS readers and search indexing). Wrap it in [`<BrowserOnly>`](https://docusaurus.io/docs/docusaurus-core#browseronly) only if you want to skip prerendering deliberately.
 - **The "today" marker is baked in at build time.** `Wheel` highlights the current month/week using `new Date()` during render, so on a statically built site the prerendered highlight reflects the *build* date until hydration corrects it. For a frequently-stale site, rebuild periodically or render inside `<BrowserOnly>`.
-- **Need `task.html` as an actual string?** Only if you're feeding it to something that requires HTML (an export, a search index, `dangerouslySetInnerHTML`). Rendering the `bodies` component is better for display. If you do need the string, generate the data with a Node script (`gray-matter` + `marked`, exactly what [the Vite plugin](src/lib/vitePlugin.js) does) and import that instead of using the barrel above.
+- **Need `task.html` as an actual string?** Only if you're feeding it to something that requires HTML (an export, a search index, `dangerouslySetInnerHTML`). Rendering the component is better for display. If you do need the string, generate the data with a Node script (`gray-matter` + `marked`, exactly what [the Vite plugin](src/lib/vitePlugin.js) does) and hand that map to `processTasks` instead of using the loader.
 - **Styling** works the same as any other consumer — see the styling note above; add the rules to `src/css/custom.css`.
 
 ---
