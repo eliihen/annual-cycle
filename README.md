@@ -333,7 +333,9 @@ Docusaurus's loader hands back a *different shape* than `processTasks` expects, 
 // require.context globs every .md in this folder at build time.
 const ctx = require.context('./', false, /\.md$/);
 
-const modules = {};
+export const modules = {};
+export const bodies = {};
+
 for (const key of ctx.keys()) {
   const mod = ctx(key);
   // './board-meeting.md' -> './tasks/board-meeting.md' so ids come out as
@@ -341,12 +343,14 @@ for (const key of ctx.keys()) {
   modules[key.replace('./', './tasks/')] = {
     default: { frontmatter: mod.frontMatter, html: '' },
   };
+  // The task description, compiled by Docusaurus to a React component.
+  bodies[key.replace('./', '').replace(/\.md$/, '')] = mod.default;
 }
 
 export default modules;
 ```
 
-`html` is left empty on purpose: Docusaurus compiles Markdown bodies to React components rather than HTML strings, and `Wheel` never reads `html` anyway (it's only used by the sidebar card, which this package doesn't export). Nothing is lost.
+**Why `html` is empty, and how to render descriptions anyway.** `processTasks` carries an `html` string on every task, but Docusaurus compiles Markdown bodies to React components rather than HTML strings, so there is nothing to put there. That is not a loss — it's an upgrade. Keep the component in the `bodies` map above and render it directly (step 3), and your task descriptions get the full Docusaurus treatment: admonitions, syntax-highlighted code, internal links, and any MDX components you've registered — none of which survive an HTML string. `Wheel` itself never reads `html`, so leaving it empty costs nothing.
 
 > **Skip the adapter and you get an empty wheel, not an error.** Passing Docusaurus's modules straight through leaves `mod.default.frontmatter` undefined, so `processTasks` drops every task and the site still builds — a silent failure.
 
@@ -361,6 +365,11 @@ import * as securityAudit from './security-audit.md';
 
 const adapt = (mod) => ({ default: { frontmatter: mod.frontMatter, html: '' } });
 
+export const bodies = {
+  'board-meeting': boardMeeting.default,
+  'security-audit': securityAudit.default,
+};
+
 export default {
   './tasks/board-meeting.md': adapt(boardMeeting),
   './tasks/security-audit.md': adapt(securityAudit),
@@ -371,17 +380,36 @@ export default {
 
 ### 3. Add a wrapper component
 
-`Wheel` is interactive, so it needs state for the selected task. Take the task modules as a prop so the same wrapper works on any page:
+`Wheel` is interactive, so it needs state for the selected task. Take the task modules as a prop so the same wrapper works on any page, and render the clicked task's description from the `bodies` map:
 
 ```jsx
 // src/components/AnnualCycle.js
 import React, { useMemo, useState } from 'react';
 import { Wheel, processTasks } from '@eliihen/annual-cycle';
 
-export default function AnnualCycle({ tasks: taskModules, year = new Date().getFullYear() }) {
+export default function AnnualCycle({
+  tasks: taskModules,
+  bodies = {},
+  year = new Date().getFullYear(),
+}) {
   const tasks = useMemo(() => processTasks(taskModules), [taskModules]);
   const [activeId, setActiveId] = useState(null);
-  return <Wheel tasks={tasks} activeId={activeId} onTaskClick={setActiveId} year={year} />;
+
+  const active = tasks.find((t) => t.id === activeId);
+  // Repeat instances get `--r2`, `--r3`, … suffixes; they share one description.
+  const Body = activeId ? bodies[activeId.replace(/--r\d+$/, '')] : null;
+
+  return (
+    <>
+      <Wheel tasks={tasks} activeId={activeId} onTaskClick={setActiveId} year={year} />
+      {active && (
+        <div className="task-detail">
+          <h3>{active.title}</h3>
+          {Body ? <Body /> : null}
+        </div>
+      )}
+    </>
+  );
 }
 ```
 
@@ -397,14 +425,14 @@ title: Annual cycle
 ---
 
 import AnnualCycle from '@site/src/components/AnnualCycle';
-import tasks from '@site/src/tasks';
+import tasks, { bodies } from '@site/src/tasks';
 
 # Our annual cycle
 
-<AnnualCycle year={2026} tasks={tasks} />
+<AnnualCycle year={2026} tasks={tasks} bodies={bodies} />
 ```
 
-> Use a **default import** (`import tasks from …`), not `import * as tasks from …`. The namespace form would give you `{ default: modules }` and, in a barrel that used named exports instead, the keys would be JS identifiers rather than paths — which is what the task ids are derived from.
+> Use a **default import** for the task map (`import tasks from …`), not `import * as tasks from …`. The namespace form would give you `{ default: modules }` and, in a barrel that used named exports instead, the keys would be JS identifiers rather than paths — which is what the task ids are derived from.
 
 `npm run build` then prerenders the full SVG into the static HTML, and it hydrates without errors.
 
@@ -412,7 +440,7 @@ import tasks from '@site/src/tasks';
 
 - **No `<BrowserOnly>` needed.** `Wheel` touches the DOM only inside `useEffect`/event handlers, so it server-renders cleanly and the wheel is present in the prerendered HTML (good for no-JS readers and search indexing). Wrap it in [`<BrowserOnly>`](https://docusaurus.io/docs/docusaurus-core#browseronly) only if you want to skip prerendering deliberately.
 - **The "today" marker is baked in at build time.** `Wheel` highlights the current month/week using `new Date()` during render, so on a statically built site the prerendered highlight reflects the *build* date until hydration corrects it. For a frequently-stale site, rebuild periodically or render inside `<BrowserOnly>`.
-- **Need the rendered Markdown body too?** Docusaurus's loader can't give you an HTML string. Generate the data yourself with a Node script (`gray-matter` + `marked`, exactly what [the Vite plugin](src/lib/vitePlugin.js) does) and import the result instead of using the barrel above.
+- **Need `task.html` as an actual string?** Only if you're feeding it to something that requires HTML (an export, a search index, `dangerouslySetInnerHTML`). Rendering the `bodies` component is better for display. If you do need the string, generate the data with a Node script (`gray-matter` + `marked`, exactly what [the Vite plugin](src/lib/vitePlugin.js) does) and import that instead of using the barrel above.
 - **Styling** works the same as any other consumer — see the styling note above; add the rules to `src/css/custom.css`.
 
 ---
