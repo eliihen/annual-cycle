@@ -458,7 +458,11 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
                   opacity={isActive ? 1 : 0.88}
                   className={`task-arc${isActive ? ' active' : ''}`}
                 >
-                  <title>{task.title} ({rangeLabel})</title>
+                  {/* Single template string, not adjacent JSX children: React 19
+                      requires <title> children to be one string and silently drops
+                      the content during SSR otherwise, causing a hydration mismatch
+                      in server-rendered consumers (Docusaurus, Next.js, …). */}
+                  <title>{`${task.title} (${rangeLabel})`}</title>
                 </path>
                 {useCurved && (
                   <>
