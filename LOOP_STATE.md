@@ -12,6 +12,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-07 — Bootstrap loop-engineering architecture (skills, agents, hooks, cloud triage workflow, state file) — branch `loop/bootstrap` — in review
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — branch `loop/rm-unused-import` — PR opened, verifier APPROVE
 - 2026-07-23 — Bump `@vitejs/plugin-react` devDependency `^6.0.3` → `^6.0.4` (patch) — branch `loop/bump-vitejs-plugin-react-patch` — PR opened, verifier APPROVE
+- 2026-07-31 — Bump `@vitejs/plugin-react` devDependency `^6.0.3` → `^6.0.5` (patch; two patch releases had landed since the last bump) — branch `claude/focused-cerf-w6x26c` — verifier APPROVE; `npm test` 24/24, `npm run lint` clean, `npm run build` both configs pass
 
 ## In progress
 
@@ -27,4 +28,10 @@ _(none)_
 - 2026-07-07 — Unused import `categoryColor` in `src/App.jsx:4` (surfaced by new linter) — [auto-fixable] — SELECTED for Phase-7 dry run.
 - 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` (React 19 automatic runtime) — [auto-fixable] — low priority style cleanup; safe to batch.
 - 2026-07-07 — Dep drift (triage `npm outdated`): `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bump; batch after dry run. (`@vitejs/plugin-react` half of this finding shipped separately, see Done.)
-- 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
+- 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable. Superseded: `marked` is now at 18.0.6 on `main` (major bump already landed via dependabot); remaining drift is patch-level, see 2026-07-31 entry.
+- 2026-07-31 — Triage sweep: CI green on `main` since 2026-07-23 (all runs success); `npm test` (24 passed) and `npm run lint` (clean) both pass after `npm install` — no gate regressions.
+- 2026-07-31 — Issue #1 / PR #2 (test tooling) — resolved — Vitest is present and `npm test` passes; both appear closed/merged on GitHub. No action needed.
+- 2026-07-31 — Lint warnings (unused `React`/`MAX_RINGS` etc.) — resolved — `npm run lint` is clean; no warnings remain. Removing from active backlog.
+- 2026-07-31 — 10 open PRs on GitHub awaiting human review/merge: #31 (issue #15, React library export), #32 (issue #18, bundled JS actions), #34 (loop: marked/react/react-dom patch bump), #36 (loop: eslint/globals patch bump), #37 (dependabot: marked 18.0.6→18.0.7), #38 (dependabot: react 19.2.7→19.2.8), #39 (dependabot: eslint 10.7.0→10.8.0), #40 (dependabot: globals 17.7.0→17.8.0), #41 (dependabot: react-dom 19.2.7→19.2.8), #42 (security: npm audit fix for brace-expansion high-severity DoS, GHSA-mh99-v99m-4gvg) — [needs-human] — all already tracked as open PRs; do not re-file or duplicate work.
+- 2026-07-31 — `npm audit`: 1 high-severity vuln, `brace-expansion` <=5.0.7 (GHSA-mh99-v99m-4gvg), fixed by `npm audit fix` — [needs-human] — already covered by open PR #42; do not re-file.
+- 2026-07-31 — Dep drift (triage `npm outdated`): `vite` 8.1.5→8.2.0 (minor) — [auto-fixable] — no existing PR covers this; queued for this run.
