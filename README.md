@@ -305,76 +305,83 @@ Each `tasks/*.md` file uses the same frontmatter fields documented under [Adding
 
 ## Using the wheel in Docusaurus
 
-You can render the wheel directly inside an `.mdx` doc page. The steps below were verified end-to-end against a stock `create-docusaurus@latest classic` site (Docusaurus **3.10.2**, React **19.2.8**).
+You can render the wheel directly inside an `.mdx` doc page. Everything below was verified end-to-end against a stock `create-docusaurus@latest classic` site (Docusaurus **3.10.2**, React **19.2.8**).
 
-> **The exported Vite plugin does not apply here.** Docusaurus bundles with webpack (or Rspack via `@docusaurus/faster`), not Vite, so `@eliihen/annual-cycle/vite-plugin` and `import.meta.glob` are both unavailable. Instead, generate the task data with a small Node script before the site builds. The upside: **no `docusaurus.config.js` or webpack changes are required at all.**
+> **The exported Vite plugin does not apply here.** Docusaurus bundles with webpack (or Rspack via `@docusaurus/faster`), not Vite, so `@eliihen/annual-cycle/vite-plugin` and `import.meta.glob` are both unavailable. Docusaurus has its own Markdown loader, though, so you can use that instead — **no `docusaurus.config.js` or webpack changes are required at all.**
 
 ### 1. Install
 
 ```bash
 npm install @eliihen/annual-cycle
-npm install --save-dev gray-matter marked
 ```
 
 Docusaurus 3.10 declares `react: ^18 || ^19` and its `classic` template installs React 19, which satisfies this package's `^19.2.7` peer range — no `--legacy-peer-deps` needed.
 
-### 2. Generate the task data
+### 2. Add a barrel that adapts Docusaurus's Markdown modules
 
-Put your task Markdown in `tasks/` (same frontmatter as [Adding tasks](#adding-tasks)), then add `scripts/build-tasks.mjs`:
+Put your task Markdown in `src/tasks/` (same frontmatter as [Adding tasks](#adding-tasks)) alongside an `index.js`.
+
+Docusaurus's loader hands back a *different shape* than `processTasks` expects, so the barrel's job is to translate:
+
+| | Vite plugin (this repo) | Docusaurus loader |
+|---|---|---|
+| `default` | `{ frontmatter, html }` | a React component |
+| frontmatter | `default.frontmatter` | top-level **`frontMatter`** (capital M) |
 
 ```js
-import { readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import matter from 'gray-matter';
-import { marked } from 'marked';
-
-const SRC = 'tasks';
-const OUT = 'src/annual-cycle-tasks.js';
+// src/tasks/index.js
+// require.context globs every .md in this folder at build time.
+const ctx = require.context('./', false, /\.md$/);
 
 const modules = {};
-for (const file of readdirSync(SRC).filter((f) => f.endsWith('.md'))) {
-  const { data, content } = matter(readFileSync(join(SRC, file), 'utf8'));
-  // Key must contain a literal `/tasks/` segment so task ids come out as clean
-  // slugs — see the note under "Load your own tasks" above.
-  modules[`./tasks/${file}`] = { default: { frontmatter: data, html: marked(content) } };
+for (const key of ctx.keys()) {
+  const mod = ctx(key);
+  // './board-meeting.md' -> './tasks/board-meeting.md' so ids come out as
+  // clean slugs (see the id note under "Load your own tasks" above).
+  modules[key.replace('./', './tasks/')] = {
+    default: { frontmatter: mod.frontMatter, html: '' },
+  };
 }
 
-mkdirSync(dirname(OUT), { recursive: true });
-writeFileSync(OUT, `export default ${JSON.stringify(modules, null, 2)};\n`);
-console.log(`Wrote ${Object.keys(modules).length} tasks to ${OUT}`);
+export default modules;
 ```
 
-This reproduces by hand exactly what the Vite plugin does at build time: `{ default: { frontmatter, html } }` per file, keyed by path.
+`html` is left empty on purpose: Docusaurus compiles Markdown bodies to React components rather than HTML strings, and `Wheel` never reads `html` anyway (it's only used by the sidebar card, which this package doesn't export). Nothing is lost.
 
-Wire it into the npm lifecycle so it always runs first:
+> **Skip the adapter and you get an empty wheel, not an error.** Passing Docusaurus's modules straight through leaves `mod.default.frontmatter` undefined, so `processTasks` drops every task and the site still builds — a silent failure.
 
-```json
-{
-  "scripts": {
-    "prestart": "node scripts/build-tasks.mjs",
-    "prebuild": "node scripts/build-tasks.mjs"
-  }
-}
+<details>
+<summary>Prefer explicit imports over <code>require.context</code>?</summary>
+
+`require.context` is a webpack/Rspack API. To stay bundler-agnostic, list the files instead — the adapter is the same:
+
+```js
+import * as boardMeeting from './board-meeting.md';
+import * as securityAudit from './security-audit.md';
+
+const adapt = (mod) => ({ default: { frontmatter: mod.frontMatter, html: '' } });
+
+export default {
+  './tasks/board-meeting.md': adapt(boardMeeting),
+  './tasks/security-audit.md': adapt(securityAudit),
+};
 ```
 
-Add `src/annual-cycle-tasks.js` to `.gitignore` — it's generated.
+</details>
 
 ### 3. Add a wrapper component
 
-`Wheel` is interactive, so it needs state for the selected task. Wrap it once and reuse it across pages:
+`Wheel` is interactive, so it needs state for the selected task. Take the task modules as a prop so the same wrapper works on any page:
 
 ```jsx
 // src/components/AnnualCycle.js
 import React, { useMemo, useState } from 'react';
 import { Wheel, processTasks } from '@eliihen/annual-cycle';
-import taskModules from '@site/src/annual-cycle-tasks.js';
 
-export default function AnnualCycle({ year = new Date().getFullYear() }) {
-  const tasks = useMemo(() => processTasks(taskModules), []);
+export default function AnnualCycle({ tasks: taskModules, year = new Date().getFullYear() }) {
+  const tasks = useMemo(() => processTasks(taskModules), [taskModules]);
   const [activeId, setActiveId] = useState(null);
-  return (
-    <Wheel tasks={tasks} activeId={activeId} onTaskClick={setActiveId} year={year} />
-  );
+  return <Wheel tasks={tasks} activeId={activeId} onTaskClick={setActiveId} year={year} />;
 }
 ```
 
@@ -390,19 +397,25 @@ title: Annual cycle
 ---
 
 import AnnualCycle from '@site/src/components/AnnualCycle';
+import tasks from '@site/src/tasks';
 
 # Our annual cycle
 
-<AnnualCycle year={2026} />
+<AnnualCycle year={2026} tasks={tasks} />
 ```
 
-That's it — `npm run build` prerenders the full SVG into the static HTML, and it hydrates without errors.
+> Use a **default import** (`import tasks from …`), not `import * as tasks from …`. The namespace form would give you `{ default: modules }` and, in a barrel that used named exports instead, the keys would be JS identifiers rather than paths — which is what the task ids are derived from.
+
+`npm run build` then prerenders the full SVG into the static HTML, and it hydrates without errors.
 
 ### Notes
 
 - **No `<BrowserOnly>` needed.** `Wheel` touches the DOM only inside `useEffect`/event handlers, so it server-renders cleanly and the wheel is present in the prerendered HTML (good for no-JS readers and search indexing). Wrap it in [`<BrowserOnly>`](https://docusaurus.io/docs/docusaurus-core#browseronly) only if you want to skip prerendering deliberately.
 - **The "today" marker is baked in at build time.** `Wheel` highlights the current month/week using `new Date()` during render, so on a statically built site the prerendered highlight reflects the *build* date until hydration corrects it. For a frequently-stale site, rebuild periodically or render inside `<BrowserOnly>`.
+- **Need the rendered Markdown body too?** Docusaurus's loader can't give you an HTML string. Generate the data yourself with a Node script (`gray-matter` + `marked`, exactly what [the Vite plugin](src/lib/vitePlugin.js) does) and import the result instead of using the barrel above.
 - **Styling** works the same as any other consumer — see the styling note above; add the rules to `src/css/custom.css`.
+
+---
 
 ## Advanced configuration
 
