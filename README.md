@@ -290,19 +290,119 @@ export default defineConfig({
 
 ```js
 // my-tasks.js — glob your own Markdown files from wherever they live
-const taskModules = import.meta.glob('./content/tasks/*.md', { eager: true });
-export default Object.fromEntries(
-  Object.entries(taskModules).map(([path, mod]) => [path, mod.default]),
-);
+export default import.meta.glob('./content/tasks/*.md', { eager: true });
 ```
 
-Each `tasks/*.md` file uses the same frontmatter fields documented under [Adding tasks](#adding-tasks). If your build tool isn't Vite, transform each Markdown file into `{ frontmatter, html }` yourself (e.g. with `gray-matter` + `marked`) and hand the resulting map to `processTasks`.
+Pass the glob result to `processTasks` **as-is**. Each value must still be the module object with its `default` export intact (`{ default: { frontmatter, html } }`) — unwrapping it to `mod.default` yourself makes `processTasks` read no frontmatter and silently return zero tasks, i.e. an empty wheel.
 
-> **Folder name matters for task IDs:** `processTasks` derives each task's id from its glob path by stripping everything up to and including a literal `tasks/` segment (e.g. `./content/tasks/onboarding.md` → `onboarding`). Keep your directory named `tasks` (nested anywhere) to get clean ids; otherwise the id falls back to the full path with `.md` removed.
+Each `tasks/*.md` file uses the same frontmatter fields documented under [Adding tasks](#adding-tasks). If your build tool isn't Vite, transform each Markdown file into `{ frontmatter, html }` yourself (e.g. with `gray-matter` + `marked`) and hand the resulting map to `processTasks` — see [Using the wheel in Docusaurus](#using-the-wheel-in-docusaurus) for a worked non-Vite example.
+
+> **Folder name matters for task IDs:** `processTasks` derives each task's id by stripping everything up to and including a literal `/tasks/` segment (e.g. `./content/tasks/onboarding.md` → `onboarding`). The leading slash is part of the match, so a key of `tasks/onboarding.md` does *not* match and yields the id `tasks/onboarding` instead. Keep your keys in the form `…/tasks/<name>.md` to get clean ids.
 
 > **Styling:** `Wheel` renders inline SVG and carries no CSS import of its own. Copy the wheel-related rules from [`src/index.css`](src/index.css) (or [`src/iframe.css`](src/iframe.css) for the minimal variant) into your app's stylesheet to match the reference look.
 
 ---
+
+## Using the wheel in Docusaurus
+
+You can render the wheel directly inside an `.mdx` doc page. The steps below were verified end-to-end against a stock `create-docusaurus@latest classic` site (Docusaurus **3.10.2**, React **19.2.8**).
+
+> **The exported Vite plugin does not apply here.** Docusaurus bundles with webpack (or Rspack via `@docusaurus/faster`), not Vite, so `@eliihen/annual-cycle/vite-plugin` and `import.meta.glob` are both unavailable. Instead, generate the task data with a small Node script before the site builds. The upside: **no `docusaurus.config.js` or webpack changes are required at all.**
+
+### 1. Install
+
+```bash
+npm install @eliihen/annual-cycle
+npm install --save-dev gray-matter marked
+```
+
+Docusaurus 3.10 declares `react: ^18 || ^19` and its `classic` template installs React 19, which satisfies this package's `^19.2.7` peer range — no `--legacy-peer-deps` needed.
+
+### 2. Generate the task data
+
+Put your task Markdown in `tasks/` (same frontmatter as [Adding tasks](#adding-tasks)), then add `scripts/build-tasks.mjs`:
+
+```js
+import { readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import matter from 'gray-matter';
+import { marked } from 'marked';
+
+const SRC = 'tasks';
+const OUT = 'src/annual-cycle-tasks.js';
+
+const modules = {};
+for (const file of readdirSync(SRC).filter((f) => f.endsWith('.md'))) {
+  const { data, content } = matter(readFileSync(join(SRC, file), 'utf8'));
+  // Key must contain a literal `/tasks/` segment so task ids come out as clean
+  // slugs — see the note under "Load your own tasks" above.
+  modules[`./tasks/${file}`] = { default: { frontmatter: data, html: marked(content) } };
+}
+
+mkdirSync(dirname(OUT), { recursive: true });
+writeFileSync(OUT, `export default ${JSON.stringify(modules, null, 2)};\n`);
+console.log(`Wrote ${Object.keys(modules).length} tasks to ${OUT}`);
+```
+
+This reproduces by hand exactly what the Vite plugin does at build time: `{ default: { frontmatter, html } }` per file, keyed by path.
+
+Wire it into the npm lifecycle so it always runs first:
+
+```json
+{
+  "scripts": {
+    "prestart": "node scripts/build-tasks.mjs",
+    "prebuild": "node scripts/build-tasks.mjs"
+  }
+}
+```
+
+Add `src/annual-cycle-tasks.js` to `.gitignore` — it's generated.
+
+### 3. Add a wrapper component
+
+`Wheel` is interactive, so it needs state for the selected task. Wrap it once and reuse it across pages:
+
+```jsx
+// src/components/AnnualCycle.js
+import React, { useMemo, useState } from 'react';
+import { Wheel, processTasks } from '@eliihen/annual-cycle';
+import taskModules from '@site/src/annual-cycle-tasks.js';
+
+export default function AnnualCycle({ year = new Date().getFullYear() }) {
+  const tasks = useMemo(() => processTasks(taskModules), []);
+  const [activeId, setActiveId] = useState(null);
+  return (
+    <Wheel tasks={tasks} activeId={activeId} onTaskClick={setActiveId} year={year} />
+  );
+}
+```
+
+> **`onTaskClick` is required.** `Wheel` calls it unconditionally when an arc is clicked, so omitting it throws `onTaskClick is not a function`. Pass `() => {}` if you want a non-interactive wheel.
+
+### 4. Use it from an `.mdx` file
+
+Rename the page to `.mdx` (Docusaurus only evaluates JSX in `.mdx`, not `.md`), then import and render:
+
+```mdx
+---
+title: Annual cycle
+---
+
+import AnnualCycle from '@site/src/components/AnnualCycle';
+
+# Our annual cycle
+
+<AnnualCycle year={2026} />
+```
+
+That's it — `npm run build` prerenders the full SVG into the static HTML, and it hydrates without errors.
+
+### Notes
+
+- **No `<BrowserOnly>` needed.** `Wheel` touches the DOM only inside `useEffect`/event handlers, so it server-renders cleanly and the wheel is present in the prerendered HTML (good for no-JS readers and search indexing). Wrap it in [`<BrowserOnly>`](https://docusaurus.io/docs/docusaurus-core#browseronly) only if you want to skip prerendering deliberately.
+- **The "today" marker is baked in at build time.** `Wheel` highlights the current month/week using `new Date()` during render, so on a statically built site the prerendered highlight reflects the *build* date until hydration corrects it. For a frequently-stale site, rebuild periodically or render inside `<BrowserOnly>`.
+- **Styling** works the same as any other consumer — see the styling note above; add the rules to `src/css/custom.css`.
 
 ## Advanced configuration
 
