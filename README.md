@@ -293,7 +293,7 @@ export default defineConfig({
 export default import.meta.glob('./content/tasks/*.md', { eager: true });
 ```
 
-Pass the glob result to `processTasks` **as-is**. Each value must still be the module object with its `default` export intact (`{ default: { frontmatter, html } }`) — unwrapping it to `mod.default` yourself makes `processTasks` read no frontmatter and silently return zero tasks, i.e. an empty wheel.
+Pass the glob result to `processTasks` directly. It reads either the module object (`{ default: { frontmatter, html } }`) or a bare `{ frontmatter, html }`, so unwrapping to `mod.default` yourself is fine too — as is handing it Markdown modules from another bundler entirely (see [Using the wheel in Docusaurus](#using-the-wheel-in-docusaurus)).
 
 Each `tasks/*.md` file uses the same frontmatter fields documented under [Adding tasks](#adding-tasks). If your build tool isn't Vite, transform each Markdown file into `{ frontmatter, html }` yourself (e.g. with `gray-matter` + `marked`) and hand the resulting map to `processTasks` — see [Using the wheel in Docusaurus](#using-the-wheel-in-docusaurus) for a worked non-Vite example.
 
@@ -305,9 +305,9 @@ Each `tasks/*.md` file uses the same frontmatter fields documented under [Adding
 
 ## Using the wheel in Docusaurus
 
-You can render the wheel directly inside an `.mdx` doc page. Everything below was verified end-to-end against a stock `create-docusaurus@latest classic` site (Docusaurus **3.10.2**, React **19.2.8**).
+You can render the wheel directly inside an `.mdx` doc page. No prebuild step, no Vite plugin, no extra bundler configuration — `processTasks` reads Docusaurus's own Markdown modules directly. Verified end-to-end against a stock `create-docusaurus@latest classic` site (Docusaurus **3.10.2**, React **19.2.8**).
 
-> **The exported Vite plugin does not apply here.** Docusaurus bundles with webpack (or Rspack via `@docusaurus/faster`), not Vite, so `@eliihen/annual-cycle/vite-plugin` and `import.meta.glob` are both unavailable. Docusaurus has its own Markdown loader, though, so you can use that instead — **no `docusaurus.config.js` or webpack changes are required at all.**
+> **The exported Vite plugin does not apply here.** Docusaurus bundles with webpack (or Rspack via `@docusaurus/faster`), not Vite, so `@eliihen/annual-cycle/vite-plugin` and `import.meta.glob` are both unavailable. You don't need them: `processTasks` accepts what Docusaurus's Markdown loader already gives you.
 
 ### 1. Install
 
@@ -317,82 +317,37 @@ npm install @eliihen/annual-cycle
 
 Docusaurus 3.10 declares `react: ^18 || ^19` and its `classic` template installs React 19, which satisfies this package's `^19.2.7` peer range — no `--legacy-peer-deps` needed.
 
-### 2. Build the task list once, in a barrel
+### 2. Re-export your task Markdown
 
-Put your task Markdown in `src/tasks/` (same frontmatter as [Adding tasks](#adding-tasks)) alongside an `index.js`.
-
-Docusaurus's loader hands back a *different shape* than `processTasks` expects, so the barrel translates it:
-
-| | Vite plugin (this repo) | Docusaurus loader |
-|---|---|---|
-| `default` | `{ frontmatter, html }` | a React component |
-| frontmatter | `default.frontmatter` | top-level **`frontMatter`** (capital M) |
-
-Do the translating, the `processTasks` call, and the description wiring here — so everything downstream receives one finished array:
+Put your task Markdown in `src/tasks/` (same frontmatter as [Adding tasks](#adding-tasks)) with an `index.js` that re-exports each file as a namespace:
 
 ```js
 // src/tasks/index.js
-import { processTasks } from '@eliihen/annual-cycle';
-
-// require.context globs every .md in this folder at build time.
-const ctx = require.context('./', false, /\.md$/);
-
-const modules = {};
-const bodies = {};
-
-for (const key of ctx.keys()) {
-  const mod = ctx(key);
-  // './board-meeting.md' -> './tasks/board-meeting.md' so ids come out as
-  // clean slugs (see the id note under "Load your own tasks" above).
-  modules[key.replace('./', './tasks/')] = {
-    default: { frontmatter: mod.frontMatter, html: '' },
-  };
-  // Docusaurus compiles the Markdown body to a React component.
-  bodies[key.replace('./', '').replace(/\.md$/, '')] = mod.default;
-}
-
-// Attach each description to its task, so consumers get one self-contained
-// array. Repeat instances (`--r2`, `--r3`, …) share the description of the
-// task they were expanded from.
-export default processTasks(modules).map((task) => ({
-  ...task,
-  Body: bodies[task.id.replace(/--r\d+$/, '')],
-}));
+export * as boardMeeting from './board-meeting.md';
+export * as securityAudit from './security-audit.md';
 ```
 
-`processTasks` returns plain objects, so any extra field you attach — `Body` here — rides along untouched and stays available on every task.
-
-**On `html`.** `processTasks` puts an `html` string on each task, but Docusaurus compiles Markdown bodies to React components, not HTML strings, so there is nothing to put there. That's an upgrade rather than a loss: rendering the component gives your descriptions the full Docusaurus treatment — admonitions, syntax-highlighted code, internal links, and any MDX components you've registered — none of which survive an HTML string. `Wheel` itself never reads `html`.
-
-> **Skip the adapter and you get an empty wheel, not an error.** Passing Docusaurus's modules straight through leaves `mod.default.frontmatter` undefined, so `processTasks` drops every task and the site still builds — a silent failure.
+That's the whole data layer — plain ESM, no adapter. Each export name becomes the task's id.
 
 <details>
-<summary>Prefer explicit imports over <code>require.context</code>?</summary>
+<summary>Auto-glob the folder instead of listing files</summary>
 
-`require.context` is a webpack/Rspack API. To stay bundler-agnostic, list the files instead — everything else is the same:
+`require.context` is a webpack/Rspack builtin (no plugin needed), so a barrel that picks up new files automatically is also two lines:
 
 ```js
-import { processTasks } from '@eliihen/annual-cycle';
-import * as boardMeeting from './board-meeting.md';
-import * as securityAudit from './security-audit.md';
-
-const adapt = (mod) => ({ default: { frontmatter: mod.frontMatter, html: '' } });
-const bodies = {
-  'board-meeting': boardMeeting.default,
-  'security-audit': securityAudit.default,
-};
-
-export default processTasks({
-  './tasks/board-meeting.md': adapt(boardMeeting),
-  './tasks/security-audit.md': adapt(securityAudit),
-}).map((task) => ({ ...task, Body: bodies[task.id.replace(/--r\d+$/, '')] }));
+const ctx = require.context('./', false, /\.md$/);
+export default Object.fromEntries(
+  ctx.keys().map((k) => [k.replace(/^\.\/|\.md$/g, ''), ctx(k)]),
+);
 ```
+
+Import it as a default (`import exportedTasks from '@site/src/tasks'`) rather than with `import * as`.
 
 </details>
 
 ### 3. Add a wrapper component
 
-`Wheel` is interactive, so it needs state for the selected task. The wrapper takes the finished task array as its only data prop — the same contract `Wheel` itself has, and the same thing [`src/App.jsx`](src/App.jsx) passes:
+`Wheel` is interactive, so it needs state for the selected task. It takes the processed task array — the same thing [`src/App.jsx`](src/App.jsx) passes:
 
 ```jsx
 // src/components/AnnualCycle.js
@@ -429,22 +384,32 @@ title: Annual cycle
 ---
 
 import AnnualCycle from '@site/src/components/AnnualCycle';
-import tasks from '@site/src/tasks';
+import { processTasks } from '@eliihen/annual-cycle';
+import * as exportedTasks from '@site/src/tasks';
 
 # Our annual cycle
 
-<AnnualCycle year={2026} tasks={tasks} />
+<AnnualCycle year={2026} tasks={processTasks(exportedTasks)} />
 ```
 
-> Use a **default import** (`import tasks from …`), not `import * as tasks from …` — the namespace form would give you `{ default: tasks }`.
+`npm run build` prerenders the full SVG into the static HTML, and it hydrates without errors.
 
-`npm run build` then prerenders the full SVG into the static HTML, and it hydrates without errors.
+### Rendering task descriptions
+
+`processTasks` normalises both Markdown module shapes it may be handed:
+
+| | Vite plugin (this repo) | Docusaurus loader |
+|---|---|---|
+| frontmatter | `default.frontmatter` | top-level `frontMatter` |
+| body | `default.html` (HTML string) | `default` (a React component) |
+
+Whichever you pass, every task comes back with the same fields. The body arrives as `task.html` under Vite and as `task.Body` under Docusaurus — which is an upgrade, not a workaround: rendering the component gives descriptions the full Docusaurus treatment (admonitions, syntax-highlighted code, internal links, registered MDX components), none of which survive an HTML string. `Body` is carried onto expanded repeat instances too, so `--r2`, `--r3`, … render the same description.
 
 ### Notes
 
 - **No `<BrowserOnly>` needed.** `Wheel` touches the DOM only inside `useEffect`/event handlers, so it server-renders cleanly and the wheel is present in the prerendered HTML (good for no-JS readers and search indexing). Wrap it in [`<BrowserOnly>`](https://docusaurus.io/docs/docusaurus-core#browseronly) only if you want to skip prerendering deliberately.
 - **The "today" marker is baked in at build time.** `Wheel` highlights the current month/week using `new Date()` during render, so on a statically built site the prerendered highlight reflects the *build* date until hydration corrects it. For a frequently-stale site, rebuild periodically or render inside `<BrowserOnly>`.
-- **Need `task.html` as an actual string?** Only if you're feeding it to something that requires HTML (an export, a search index, `dangerouslySetInnerHTML`). Rendering the component is better for display. If you do need the string, generate the data with a Node script (`gray-matter` + `marked`, exactly what [the Vite plugin](src/lib/vitePlugin.js) does) and hand that map to `processTasks` instead of using the loader.
+- **Need `task.html` as a string under Docusaurus?** MDX has no HTML string to give, so `html` is empty there. If you need one (for a search index or an export), generate the data with a Node script (`gray-matter` + `marked`, exactly what [the Vite plugin](src/lib/vitePlugin.js) does) and hand that map to `processTasks` instead.
 - **Styling** works the same as any other consumer — see the styling note above; add the rules to `src/css/custom.css`.
 
 ---

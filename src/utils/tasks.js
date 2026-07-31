@@ -99,14 +99,31 @@ export function assignRings(tasks) {
   });
 }
 
+// Markdown bundlers disagree on what a `.md` module looks like, so read both
+// shapes rather than making callers adapt:
+//
+//   Vite, via src/lib/vitePlugin.js   { default: { frontmatter, html } }
+//   Docusaurus / MDX loaders          { frontMatter, default: Component }
+//
+// MDX compiles the body to a component instead of an HTML string, so `html` is
+// empty there and the component is handed back as `Body` for the caller to
+// render. Anything else (a bare `{ frontmatter, html }`) is read directly.
+function readModule(mod) {
+  if (typeof mod?.default === 'function') {
+    return { data: mod.frontMatter ?? mod.frontmatter ?? {}, html: '', Body: mod.default };
+  }
+  const src = mod?.default ?? mod ?? {};
+  return { data: src.frontmatter ?? src.frontMatter ?? {}, html: src.html ?? '', Body: null };
+}
+
 export function processTasks(modules) {
   const tasks = Object.entries(modules).map(([filePath, mod]) => {
     // Only cleans up to a clean slug when the glob path has a literal
     // `tasks/` segment (as this repo's own `tasks/*.md` does); otherwise the
-    // id falls back to the full path with `.md` stripped.
+    // id falls back to the full path with `.md` stripped. Barrel exports whose
+    // keys are already plain names (`boardMeeting`) pass through unchanged.
     const id = filePath.replace(/^.*\/tasks\//, '').replace(/\.md$/, '');
-    const data = mod.default?.frontmatter ?? {};
-    const html = mod.default?.html ?? '';
+    const { data, html, Body } = readModule(mod);
 
     // A task needs an explicit start_week or start_month to be placeable on
     // the wheel — without one there's no sensible position, so it's omitted
@@ -141,6 +158,7 @@ export function processTasks(modules) {
       startFrac,
       endFrac,
       html,
+      Body,
     };
   }).filter(Boolean).flatMap(expandRepeats).sort((a, b) => a.startFrac - b.startFrac);
 
