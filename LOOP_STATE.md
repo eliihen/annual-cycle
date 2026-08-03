@@ -13,22 +13,21 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — branch `loop/rm-unused-import` — PR opened, verifier APPROVE
 - 2026-07-23 — Bump `@vitejs/plugin-react` devDependency `^6.0.3` → `^6.0.4` (patch) — branch `loop/bump-vitejs-plugin-react-patch` — PR opened, verifier APPROVE
 - 2026-07-28 — `npm audit fix`: bump `brace-expansion` 5.0.7 → 5.0.8 (transitive dev dep, via eslint→minimatch), resolving high-severity DoS GHSA-mh99-v99m-4gvg — branch `claude/focused-cerf-dhu8jz`, PR #42 — verifier APPROVE, PR opened
+- 2026-07-31 — Lint warnings (unused `React`/`MAX_RINGS` across `src/**`) — merged (see PR #12 `loop/rm-unused-react-imports`) — `npm run lint` now zero-warning; resolved before this run.
+- 2026-07-31 — Dep drift batch: `marked` reached 18.0.7 (was 12.0.2→18.0.5 major concern), `@vitejs/plugin-react` reached 6.0.4, `vite` reached 8.1.5, `eslint`/`globals`/`react`/`react-dom` bumped — resolved via merged PRs #34, #36–#43 (Dependabot + loop) — [resolved] no action needed.
+- 2026-07-31 — Redundant open PRs #34/#36 vs Dependabot #37–#41 — resolved: all closed/merged (#43 was the final consolidated bump); no conflict remains.
 
 ## In progress
 
-_(none)_
+- 2026-08-03 — Dep drift: `vite` 8.1.5→8.2.0 (minor) — [auto-fixable] — SELECTED this run.
+- 2026-08-03 — Dep drift: `@vitejs/plugin-react` 6.0.4→6.0.5 (patch) — [auto-fixable] — SELECTED this run.
+- 2026-08-03 — Dep drift: `globals` 17.8.0→17.9.0 (patch) — [auto-fixable] — SELECTED this run.
 
 ## Backlog
 
 <!-- Seeded from GitHub state at bootstrap. triage appends here; check for
      duplicates before adding. -->
 
-- 2026-07-07 — Issue #1: No test coverage tooling configured — [needs-human] — superseded by open PR #2 and by the minimal Vitest setup added in `loop/bootstrap`; do not re-file. Close #1 once test tooling lands on `main`.
-- 2026-07-07 — PR #2: "Add Vitest testing and coverage tooling" (branch `claude/awesome-maxwell-5ifjig`) — [needs-human] — awaiting human review/merge; comprehensive suite that supersedes the bootstrap minimal setup.
-- 2026-07-07 — Unused import `categoryColor` in `src/App.jsx:4` (surfaced by new linter) — [auto-fixable] — SELECTED for Phase-7 dry run.
-- 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` (React 19 automatic runtime) — [auto-fixable] — low priority style cleanup; safe to batch.
-- 2026-07-07 — Dep drift (triage `npm outdated`): `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bump; batch after dry run. (`@vitejs/plugin-react` half of this finding shipped separately, see Done.)
-- 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
+- 2026-08-03 — Issue #1 "No test coverage tooling configured" — closed on GitHub; PR #2 also closed/gone from open list — resolved, no action needed.
 - 2026-07-28 — Issue #15 "Implement a react library as well" — [needs-human] — already has open PR #31 "Implement React library export with reusable Vite plugin" (branch `claude/issue-15-implementer-verifier-4phr6t`) awaiting review; do not re-file.
 - 2026-07-28 — Issue #18 "Make proper GitHub actions" — [needs-human] — already has open PR #32 "Convert build & notify-slack actions to bundled JavaScript" (branch `claude/issue-18-implementer-verifier-xsxokd`) awaiting review; do not re-file.
-- 2026-07-28 — Redundant open PRs: loop PR #34 (bump marked/react/react-dom, patch) and PR #36 (bump eslint/globals, patch) are superseded by newer Dependabot PRs #37–#41 targeting slightly newer versions of the same packages — [needs-human] — merge/close decision to avoid conflicting bump PRs; not auto-fixable.
