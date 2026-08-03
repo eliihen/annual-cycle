@@ -13,6 +13,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — branch `loop/rm-unused-import` — PR opened, verifier APPROVE
 - 2026-07-23 — Bump `@vitejs/plugin-react` devDependency `^6.0.3` → `^6.0.4` (patch) — branch `loop/bump-vitejs-plugin-react-patch` — PR opened, verifier APPROVE
 - 2026-07-28 — `npm audit fix`: bump `brace-expansion` 5.0.7 → 5.0.8 (transitive dev dep, via eslint→minimatch), resolving high-severity DoS GHSA-mh99-v99m-4gvg — branch `claude/focused-cerf-dhu8jz`, PR #42 — verifier APPROVE, PR opened
+- 2026-08-03 — Bump `@vitejs/plugin-react` devDependency `^6.0.4` → `^6.0.5` (patch) — branch `loop/bump-vitejs-plugin-react` — verifier APPROVE (npm test 24/24, npm run lint clean, npm run build both index.html+iframe.html), PR opened
 
 ## In progress
 
