@@ -16,12 +16,13 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-31 — Lint warnings (unused `React`/`MAX_RINGS` across `src/**`) — merged (see PR #12 `loop/rm-unused-react-imports`) — `npm run lint` now zero-warning; resolved before this run.
 - 2026-07-31 — Dep drift batch: `marked` reached 18.0.7 (was 12.0.2→18.0.5 major concern), `@vitejs/plugin-react` reached 6.0.4, `vite` reached 8.1.5, `eslint`/`globals`/`react`/`react-dom` bumped — resolved via merged PRs #34, #36–#43 (Dependabot + loop) — [resolved] no action needed.
 - 2026-07-31 — Redundant open PRs #34/#36 vs Dependabot #37–#41 — resolved: all closed/merged (#43 was the final consolidated bump); no conflict remains.
+- 2026-08-03 — Bump `vite` devDependency `^8.1.5` → `^8.2.0` (minor) — branch `loop/bump-vite`, PR #44 — verifier APPROVE (npm test 24/24, npm run lint clean, npm run build both index.html+iframe.html)
+- 2026-08-03 — Bump `@vitejs/plugin-react` devDependency `^6.0.4` → `^6.0.5` (patch) — branch `loop/bump-vitejs-plugin-react`, PR #45 — verifier APPROVE (npm test 24/24, npm run lint clean, npm run build both index.html+iframe.html)
+- 2026-08-03 — Bump `globals` devDependency `^17.8.0` → `^17.9.0` (minor, corrected from initial patch mislabel) — branch `loop/bump-globals`, PR #46 — verifier APPROVE (npm test 24/24, npm run lint clean incl. eslint.config.mjs globals.browser/globals.node, npm run build both index.html+iframe.html)
 
 ## In progress
 
-- 2026-08-03 — Dep drift: `vite` 8.1.5→8.2.0 (minor) — [auto-fixable] — SELECTED this run.
-- 2026-08-03 — Dep drift: `@vitejs/plugin-react` 6.0.4→6.0.5 (patch) — [auto-fixable] — SELECTED this run.
-- 2026-08-03 — Dep drift: `globals` 17.8.0→17.9.0 (patch) — [auto-fixable] — SELECTED this run.
+_(none)_
 
 ## Backlog
 
