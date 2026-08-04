@@ -16,7 +16,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 ## In progress
 
-_(none)_
+- 2026-08-04 — `npm audit fix`: brace-expansion 5.0.8→5.0.9 (high, DoS bypass) + postcss 8.5.19→8.5.25 (moderate, incomplete fix) — explorer/implementer/verifier chain running.
 
 ## Backlog
 
@@ -32,3 +32,5 @@ _(none)_
 - 2026-07-28 — Issue #15 "Implement a react library as well" — [needs-human] — already has open PR #31 "Implement React library export with reusable Vite plugin" (branch `claude/issue-15-implementer-verifier-4phr6t`) awaiting review; do not re-file.
 - 2026-07-28 — Issue #18 "Make proper GitHub actions" — [needs-human] — already has open PR #32 "Convert build & notify-slack actions to bundled JavaScript" (branch `claude/issue-18-implementer-verifier-xsxokd`) awaiting review; do not re-file.
 - 2026-07-28 — Redundant open PRs: loop PR #34 (bump marked/react/react-dom, patch) and PR #36 (bump eslint/globals, patch) are superseded by newer Dependabot PRs #37–#41 targeting slightly newer versions of the same packages — [needs-human] — merge/close decision to avoid conflicting bump PRs; not auto-fixable.
+- 2026-08-04 — `npm audit`: new high-severity `brace-expansion` DoS (range 4.0.0–5.0.8, GHSA-rgw5-rvv9-x895, bypasses the CVE-2026-14257 mitigation shipped 2026-07-28) plus moderate `postcss` incomplete-fix (≤8.5.22, GHSA-fxqj-rqcc-2cmp, arbitrary `.map` read when `from` unset) — [auto-fixable] — `npm audit fix` resolves both: brace-expansion 5.0.8→5.0.9 (transitive via eslint→minimatch) and postcss 8.5.19→8.5.25 (transitive via vite); no `.github/actions/*/action.yml` touched.
+- 2026-08-04 — Redundant open PRs: loop PR #44 (bump vite 8.1.5→8.2.0) and PR #45 (bump @vitejs/plugin-react 6.0.4→6.0.5) are duplicated by newer Dependabot PRs #48 and #47 targeting the identical versions; PR #46 (bump globals 17.8.0→17.9.0) has no Dependabot duplicate yet — [needs-human] — merge/close decision to avoid conflicting bump PRs; not auto-fixable.
