@@ -31,11 +31,20 @@ export default function TaskCard({ task, active, open, onActivate }) {
           {task.tags.map(tag => <span key={tag} className="chip">{tag}</span>)}
         </div>
       </div>
+      {/* processTasks() reports the description as `Body` (a component) when
+          the source has no HTML string to give — e.g. MDX/Docusaurus compiles
+          bodies to components instead. Prefer it over `html`, and keep the
+          html branch's DOM identical to before (dangerouslySetInnerHTML
+          directly on .task-body.open) rather than adding a wrapper. */}
       {open && (
-        <div
-          className="task-body open"
-          dangerouslySetInnerHTML={{ __html: task.html || '<p><em>No description.</em></p>' }}
-        />
+        task.Body ? (
+          <div className="task-body open"><task.Body /></div>
+        ) : (
+          <div
+            className="task-body open"
+            dangerouslySetInnerHTML={{ __html: task.html || '<p><em>No description.</em></p>' }}
+          />
+        )
       )}
     </article>
   );

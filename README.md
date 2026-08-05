@@ -282,6 +282,30 @@ export function AnnualCycle() {
 | `onTaskClick` | `(id) => void` | no | Called with the clicked task's `id`. Omit for a read-only chart — arcs become inert and drop the pointer cursor; zoom and pan still work |
 | `activeId` | string | no | Id of the task to emphasise. `Wheel` is controlled — it does not track selection itself, so pair this with `onTaskClick` |
 
+### Render the full app
+
+If you want the whole thing — the wheel plus the searchable/filterable sidebar, category legend, and year selector, exactly as deployed to GitHub Pages — the library also exports `AnnualCycleApp`. Unlike `Wheel`, it's uncontrolled: it owns its own selection, search, filter, and year state internally.
+
+```jsx
+import { useMemo } from 'react';
+import { AnnualCycleApp, processTasks } from '@eliihen/annual-cycle';
+import taskModules from './my-tasks.js';
+
+export function MyAnnualCycle() {
+  const tasks = useMemo(() => processTasks(taskModules), []);
+  return <AnnualCycleApp tasks={tasks} />;
+}
+```
+
+#### `AnnualCycleApp` props
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `tasks` | array | yes | Tasks already run through `processTasks` |
+| `initialYear` | number | no | Starting value for the built-in year selector. Defaults to the current year. Read once on mount — changing it on a later render has no effect, since the year is then owned by the component's own state (use `key` to force a remount if you need to reset it) |
+
+The sidebar renders each task's description the same way `Wheel`'s tooltip does: `task.html` as HTML when present, or `task.Body` (a component) when the source has no HTML string to give — see [Rendering task descriptions](#rendering-task-descriptions) below.
+
 ### Load your own tasks
 
 `processTasks` expects an object shaped like the output of Vite's [`import.meta.glob`](https://vite.dev/guide/features.html#glob-import) after each Markdown file has been transformed to `{ frontmatter, html }` — the "import on demand based on a configured path" mechanism. The library ships the same Markdown transform it uses internally as a Vite plugin, so you can point it at *your own* tasks directory:
@@ -539,12 +563,18 @@ npm run storybook         # dev server at http://localhost:6006
 npm run build-storybook   # static build → storybook-static/
 ```
 
-Stories live next to the component as `src/**/*.stories.jsx`. `Wheel` is covered by
-eight: `Default` renders this repo's real `tasks/*.md`, and the rest exercise one
-behaviour each — month vs. week precision, `repeat` expansion, ring assignment when
-ranges overlap, category-color resolution, the empty state, and `NonInteractive`
-(no `onTaskClick`). `year` is editable from the Controls panel, and arcs are
-clickable (the story owns `activeId`, since `Wheel` is a controlled component).
+Stories live next to the component as `src/**/*.stories.jsx`, one file per exported
+component. `Wheel` is covered by eight: `Default` renders this repo's real
+`tasks/*.md`, and the rest exercise one behaviour each — month vs. week precision,
+`repeat` expansion, ring assignment when ranges overlap, category-color resolution,
+the empty state, and `NonInteractive` (no `onTaskClick`). `year` is editable from
+the Controls panel, and arcs are clickable (the story owns `activeId`, since `Wheel`
+is a controlled component).
+
+`AnnualCycleApp` is covered by three: `Default` (real tasks), `Empty`, and
+`MdxDescription`, which supplies a task whose description is a component rather
+than an HTML string — click its arc or card to confirm it renders. Unlike `Wheel`,
+`AnnualCycleApp` owns its own state, so its stories need no external harness.
 
 `.storybook/main.js` reuses the project's own [`markdownPlugin`](src/lib/vitePlugin.js)
 so stories can import real Markdown tasks. It only registers the plugin if it isn't
@@ -567,14 +597,16 @@ examples/
   workflows/        ← copy-paste workflow files for consumers
   tasks/            ← example task files
 src/
-  App.jsx           ← main app (wheel + sidebar + filters)
+  App.jsx           ← main app entry — loads tasks/*.md, renders AnnualCycleApp
   IframeApp.jsx     ← iframe-only app (wheel only)
   components/
-    Wheel.jsx           ← SVG wheel with zoom/pan and pinch support
-    Wheel.stories.jsx   ← Storybook stories for the exported Wheel component
-    TaskCard.jsx        ← collapsible sidebar card
+    Wheel.jsx                 ← SVG wheel with zoom/pan and pinch support
+    Wheel.stories.jsx         ← Storybook stories for the exported Wheel component
+    AnnualCycleApp.jsx        ← wheel + sidebar + filters, exported as-is to consumers
+    AnnualCycleApp.stories.jsx ← Storybook stories for the exported AnnualCycleApp
+    TaskCard.jsx              ← collapsible sidebar card (used by AnnualCycleApp)
   lib/
-    index.js        ← npm library entry — exports Wheel + processTasks
+    index.js        ← npm library entry — exports Wheel, AnnualCycleApp, processTasks
     vitePlugin.js   ← shared Markdown→JSON Vite plugin (also exported to consumers)
   utils/
     tasks.js        ← task loading, ring assignment, category colors
