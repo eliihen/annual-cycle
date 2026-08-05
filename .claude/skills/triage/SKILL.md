@@ -3,9 +3,10 @@ name: triage
 description: >
   Discovery playbook for the autonomous loop. Use at the start of a loop run to
   find new work: check CI runs since the last LOOP_STATE.md entry, list open
-  issues and PRs, scan recent commits for TODO/FIXME, and check npm outdated for
-  minor/patch drift. Appends deduplicated, tagged findings to the Backlog in
-  LOOP_STATE.md. Use whenever asked to "triage", "find work", or "discover tasks".
+  issues and PRs, and scan recent commits for TODO/FIXME. Dependency bumps are
+  handled by Dependabot and are out of scope. Appends deduplicated, tagged
+  findings to the Backlog in LOOP_STATE.md. Use whenever asked to "triage",
+  "find work", or "discover tasks".
 ---
 
 # triage — discover work, write it to the backlog
@@ -39,13 +40,7 @@ duplicate of anything already in `Done`, `In progress`, or `Backlog`.
    grep -rnE "TODO|FIXME|XXX|HACK" src/ tasks/ scripts/ --include=*.js --include=*.jsx --include=*.md
    ```
 
-5. **Dependency drift (minor/patch only):**
-   ```bash
-   npm outdated || true
-   ```
-   Only minor/patch bumps are `auto-fixable`. Major bumps → `[needs-human]`.
-
-6. **Tooling gates still green?** Quick sanity:
+5. **Tooling gates still green?** Quick sanity:
    ```bash
    npm test && npm run lint
    ```
@@ -62,8 +57,10 @@ Rules:
 - Tag `auto-fixable` only if a single small diff + passing gates can close it
   and it does **not** touch `.github/actions/*/action.yml`. Everything ambiguous,
   security-sensitive, or interface-touching → `needs-human`.
-- Keep descriptions boring and specific ("bump vite 8.0.16→8.0.18", not
-  "update deps").
+- **Never file dependency version bumps** (npm packages, GitHub Actions).
+  Dependabot (`.github/dependabot.yml`) already opens PRs for these weekly —
+  triage should not duplicate that work.
+- Keep descriptions boring and specific.
 
 Then stop. triage does not implement — the explorer/implementer/verifier chain
 and the `ship` skill do that.
