@@ -14,7 +14,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-23 — Bump `@vitejs/plugin-react` devDependency `^6.0.3` → `^6.0.4` (patch) — branch `loop/bump-vitejs-plugin-react-patch` — PR opened, verifier APPROVE
 - 2026-07-28 — `npm audit fix`: bump `brace-expansion` 5.0.7 → 5.0.8 (transitive dev dep, via eslint→minimatch), resolving high-severity DoS GHSA-mh99-v99m-4gvg — branch `claude/focused-cerf-dhu8jz`, PR #42 — verifier APPROVE, PR opened
 - 2026-08-04 — `npm audit fix`: brace-expansion 5.0.8→5.0.9 (high, DoS bypass) + postcss 8.5.19→8.5.25 (moderate, incomplete fix) — branch `loop/npm-audit-fix-brace-postcss`, PR #49 — merged to main; `npm audit` now clean (0 vulnerabilities)
-- 2026-08-05 — Bump `marked` 18.0.7→18.0.9 (patch) — branch `loop/bump-marked-patch`, PR #50 — explorer/implementer/verifier chain, verifier APPROVE, PR opened
+- 2026-08-05 — Bump `marked` 18.0.7→18.0.9 (patch) — branch `loop/bump-marked-patch`, PR #50 — explorer/implementer/verifier chain, verifier APPROVE, merged to main
 
 ## In progress
 
