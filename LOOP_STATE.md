@@ -14,6 +14,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-23 — Bump `@vitejs/plugin-react` devDependency `^6.0.3` → `^6.0.4` (patch) — branch `loop/bump-vitejs-plugin-react-patch` — PR opened, verifier APPROVE
 - 2026-07-28 — `npm audit fix`: bump `brace-expansion` 5.0.7 → 5.0.8 (transitive dev dep, via eslint→minimatch), resolving high-severity DoS GHSA-mh99-v99m-4gvg — branch `claude/focused-cerf-dhu8jz`, PR #42 — verifier APPROVE, PR opened
 - 2026-08-04 — `npm audit fix`: brace-expansion 5.0.8→5.0.9 (high, DoS bypass) + postcss 8.5.19→8.5.25 (moderate, incomplete fix) — branch `loop/npm-audit-fix-brace-postcss`, PR #49 — merged to main; `npm audit` now clean (0 vulnerabilities)
+- 2026-08-05 — Bump `marked` 18.0.7→18.0.9 (patch) — branch `loop/bump-marked-patch`, PR #50 — explorer/implementer/verifier chain, verifier APPROVE, PR opened
 
 ## In progress
 
@@ -34,4 +35,4 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-08-04 — `npm audit`: new high-severity `brace-expansion` DoS (range 4.0.0–5.0.8, GHSA-rgw5-rvv9-x895, bypasses the CVE-2026-14257 mitigation shipped 2026-07-28) plus moderate `postcss` incomplete-fix (≤8.5.22, GHSA-fxqj-rqcc-2cmp, arbitrary `.map` read when `from` unset) — [auto-fixable] — `npm audit fix` resolves both: brace-expansion 5.0.8→5.0.9 (transitive via eslint→minimatch) and postcss 8.5.19→8.5.25 (transitive via vite); no `.github/actions/*/action.yml` touched.
 - 2026-08-04 — Redundant open PRs: loop PR #44 (bump vite 8.1.5→8.2.0) and PR #45 (bump @vitejs/plugin-react 6.0.4→6.0.5) are duplicated by newer Dependabot PRs #48 and #47 targeting the identical versions; PR #46 (bump globals 17.8.0→17.9.0) has no Dependabot duplicate yet — [needs-human] — merge/close decision to avoid conflicting bump PRs; not auto-fixable.
 - 2026-08-05 — Dependabot PRs #47 (`@vitejs/plugin-react` 6.0.4→6.0.5) and #48 (`vite` 8.1.5→8.2.0) merged to `main`; package.json now pins `@vitejs/plugin-react ^6.0.5` and `vite ^8.2.0` — resolved, no action needed. Loop PR #46 (`globals` 17.8.0→17.9.0) still open with no duplicate — merge/close decision stands, see above.
-- 2026-08-05 — triage `npm outdated`: `marked` 18.0.7→18.0.9 (patch) — [auto-fixable] — safe patch bump within already-adopted major (v18); no `.github/actions/*/action.yml` touched.
+- 2026-08-05 — triage `npm outdated`: `marked` 18.0.7→18.0.9 (patch) — [auto-fixable] — safe patch bump within already-adopted major (v18); no `.github/actions/*/action.yml` touched. SHIPPED 2026-08-05, see Done (PR #50).
