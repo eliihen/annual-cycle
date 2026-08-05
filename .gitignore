@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist-lib/
+storybook-static/
 .DS_Store
 coverage/
 # Loop worktrees created by the implementer agent (isolation: worktree)

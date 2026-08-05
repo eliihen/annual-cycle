@@ -48,7 +48,9 @@
     "notify:debug": "DRY_RUN=1 NOTIFY_PERIOD=all node src/notify.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "gray-matter": "^4.0.3",
@@ -60,11 +62,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@storybook/react-vite": "^10.5.6",
     "@vitejs/plugin-react": "^6.0.4",
     "eslint": "^10.7.0",
     "globals": "^17.7.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "storybook": "^10.5.6",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
   }

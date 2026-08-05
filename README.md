@@ -521,6 +521,27 @@ npm run build     # production build → dist/
 npm run preview   # serve the dist/ build locally
 ```
 
+### Storybook
+
+The components the npm library exports are developed in isolation with Storybook:
+
+```bash
+npm run storybook         # dev server at http://localhost:6006
+npm run build-storybook   # static build → storybook-static/
+```
+
+Stories live next to the component as `src/**/*.stories.jsx`. `Wheel` is covered by
+seven: `Default` renders this repo's real `tasks/*.md`, and the rest exercise one
+behaviour each — month vs. week precision, `repeat` expansion, ring assignment when
+ranges overlap, category-color resolution, and the empty state. `year` is editable
+from the Controls panel, and arcs are clickable (the story owns `activeId`, since
+`Wheel` is a controlled component).
+
+`.storybook/main.js` reuses the project's own [`markdownPlugin`](src/lib/vitePlugin.js)
+so stories can import real Markdown tasks. It only registers the plugin if it isn't
+already present — Storybook's Vite builder merges `vite.config.js`, which supplies it,
+and running the transform twice would parse the first pass's JS output as Markdown.
+
 ### Debug Slack notification
 
 ```bash
@@ -540,8 +561,9 @@ src/
   App.jsx           ← main app (wheel + sidebar + filters)
   IframeApp.jsx     ← iframe-only app (wheel only)
   components/
-    Wheel.jsx       ← SVG wheel with zoom/pan and pinch support
-    TaskCard.jsx    ← collapsible sidebar card
+    Wheel.jsx           ← SVG wheel with zoom/pan and pinch support
+    Wheel.stories.jsx   ← Storybook stories for the exported Wheel component
+    TaskCard.jsx        ← collapsible sidebar card
   lib/
     index.js        ← npm library entry — exports Wheel + processTasks
     vitePlugin.js   ← shared Markdown→JSON Vite plugin (also exported to consumers)
@@ -553,6 +575,9 @@ src/
 vite.config.js      ← Vite config with Markdown plugin and multi-page build
 vite.iframe.config.js ← iframe-only build (wheel with no chrome)
 vite.lib.config.js  ← library build → dist-lib/ (ESM + CJS, React externalized)
+.storybook/
+  main.js           ← Storybook config (reuses the project's Markdown plugin)
+  preview.js        ← loads src/index.css so the wheel is styled in the canvas
 .github/
   workflows/
     deploy-demo.yml          ← deploys this repo's own demo to GitHub Pages
