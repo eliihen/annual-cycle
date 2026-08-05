@@ -123,3 +123,13 @@ export const ColorOverrides = {
 export const Empty = {
   args: { tasks: [] },
 };
+
+/**
+ * No `onTaskClick`. The prop is optional: the wheel becomes a read-only chart,
+ * arcs are inert and carry no pointer cursor. Rendered without the stateful
+ * harness so the component really does receive no handler.
+ */
+export const NonInteractive = {
+  render: (args) => <Wheel {...args} />,
+  args: { tasks: realTasks },
+};

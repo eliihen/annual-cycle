@@ -15,6 +15,27 @@ const modules = {
   },
 };
 
+describe('Wheel without an onTaskClick handler', () => {
+  // onTaskClick is optional — the wheel is a perfectly good read-only chart
+  // without it, so rendering must not depend on a handler being supplied.
+  const render = () =>
+    renderToStaticMarkup(<Wheel tasks={processTasks(modules)} year={2026} />);
+
+  it('renders the arcs without throwing', () => {
+    expect(render).not.toThrow();
+    expect(render()).toContain('Board meeting');
+  });
+
+  it('drops the pointer cursor when there is nothing to click', () => {
+    expect(render()).not.toContain('cursor:pointer');
+    // …but offers it when a handler is present.
+    const interactive = renderToStaticMarkup(
+      <Wheel tasks={processTasks(modules)} onTaskClick={() => {}} year={2026} />,
+    );
+    expect(interactive).toContain('cursor:pointer');
+  });
+});
+
 describe('Wheel server rendering', () => {
   const markup = renderToStaticMarkup(
     <Wheel tasks={processTasks(modules)} activeId={null} onTaskClick={() => {}} year={2026} />,

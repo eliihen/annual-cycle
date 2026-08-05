@@ -273,6 +273,15 @@ export function AnnualCycle() {
 }
 ```
 
+#### `Wheel` props
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `tasks` | array | yes | Tasks already run through `processTasks` |
+| `year` | number | no | Year shown in the hub; drives the "today" highlight. Defaults to no highlight if it isn't the current year |
+| `onTaskClick` | `(id) => void` | no | Called with the clicked task's `id`. Omit for a read-only chart — arcs become inert and drop the pointer cursor; zoom and pan still work |
+| `activeId` | string | no | Id of the task to emphasise. `Wheel` is controlled — it does not track selection itself, so pair this with `onTaskClick` |
+
 ### Load your own tasks
 
 `processTasks` expects an object shaped like the output of Vite's [`import.meta.glob`](https://vite.dev/guide/features.html#glob-import) after each Markdown file has been transformed to `{ frontmatter, html }` — the "import on demand based on a configured path" mechanism. The library ships the same Markdown transform it uses internally as a Vite plugin, so you can point it at *your own* tasks directory:
@@ -372,7 +381,7 @@ export default function AnnualCycle({ tasks, year = new Date().getFullYear() }) 
 }
 ```
 
-> **`onTaskClick` is required.** `Wheel` calls it unconditionally when an arc is clicked, so omitting it throws `onTaskClick is not a function`. Pass `() => {}` if you want a non-interactive wheel.
+> **`onTaskClick` is optional.** Omit it (along with `activeId`) for a read-only chart — arcs become inert and drop the pointer cursor, while zoom and pan keep working.
 
 ### 4. Use it from an `.mdx` file
 
@@ -531,11 +540,11 @@ npm run build-storybook   # static build → storybook-static/
 ```
 
 Stories live next to the component as `src/**/*.stories.jsx`. `Wheel` is covered by
-seven: `Default` renders this repo's real `tasks/*.md`, and the rest exercise one
+eight: `Default` renders this repo's real `tasks/*.md`, and the rest exercise one
 behaviour each — month vs. week precision, `repeat` expansion, ring assignment when
-ranges overlap, category-color resolution, and the empty state. `year` is editable
-from the Controls panel, and arcs are clickable (the story owns `activeId`, since
-`Wheel` is a controlled component).
+ranges overlap, category-color resolution, the empty state, and `NonInteractive`
+(no `onTaskClick`). `year` is editable from the Controls panel, and arcs are
+clickable (the story owns `activeId`, since `Wheel` is a controlled component).
 
 `.storybook/main.js` reuses the project's own [`markdownPlugin`](src/lib/vitePlugin.js)
 so stories can import real Markdown tasks. It only registers the plugin if it isn't
