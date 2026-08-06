@@ -48,6 +48,53 @@ describe('assignRings', () => {
   });
 });
 
+describe('processTasks module shapes', () => {
+  const frontmatter = { title: 'Board meeting', category: 'management', start_month: 3, end_month: 4 };
+
+  it('reads the Vite plugin shape ({ default: { frontmatter, html } })', () => {
+    const [task] = processTasks({
+      './content/tasks/board.md': { default: { frontmatter, html: '<p>agenda</p>' } },
+    });
+    expect(task.title).toBe('Board meeting');
+    expect(task.html).toBe('<p>agenda</p>');
+    expect(task.Body).toBeNull();
+  });
+
+  it('reads the Docusaurus/MDX shape ({ frontMatter, default: Component })', () => {
+    const Component = () => null;
+    const [task] = processTasks({
+      boardMeeting: { frontMatter: frontmatter, default: Component, toc: [] },
+    });
+    // Key is a plain export name, not a path, so it becomes the id verbatim.
+    expect(task.id).toBe('boardMeeting');
+    expect(task.title).toBe('Board meeting');
+    // MDX has no HTML string; the body component is handed back instead.
+    expect(task.html).toBe('');
+    expect(task.Body).toBe(Component);
+  });
+
+  it('carries the body component onto expanded repeat instances', () => {
+    const Component = () => null;
+    const tasks = processTasks({
+      boardMeeting: {
+        frontMatter: { ...frontmatter, repeat: 'quarterly' },
+        default: Component,
+      },
+    });
+    expect(tasks).toHaveLength(4);
+    expect(tasks.map((t) => t.id)).toEqual([
+      'boardMeeting', 'boardMeeting--r2', 'boardMeeting--r3', 'boardMeeting--r4',
+    ]);
+    expect(tasks.every((t) => t.Body === Component)).toBe(true);
+  });
+
+  it('reads a bare { frontmatter, html } object with no module wrapper', () => {
+    const [task] = processTasks({ './tasks/board.md': { frontmatter, html: '<p>x</p>' } });
+    expect(task.title).toBe('Board meeting');
+    expect(task.html).toBe('<p>x</p>');
+  });
+});
+
 describe('processTasks', () => {
   it('defaults month precision and computes fractional positions', () => {
     const [task] = processTasks({

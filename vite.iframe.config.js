@@ -1,23 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import matter from 'gray-matter';
-import { marked } from 'marked';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
+import { markdownPlugin } from './src/lib/vitePlugin.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-function markdownPlugin() {
-  return {
-    name: 'markdown-tasks',
-    transform(src, id) {
-      if (!id.endsWith('.md')) return null;
-      const { data, content } = matter(src);
-      return `export default ${JSON.stringify({ frontmatter: data, html: marked(content) })}`;
-    },
-  };
-}
 
 // After the bundle is written, read dist/iframe.html, replace every external
 // <link stylesheet> and <script src> with inline <style> / <script> tags, then

@@ -6,7 +6,17 @@ import globals from 'globals';
 // a small project; the rules that matter are "no undefined vars" and
 // "no unused vars" so the loop's automated lint gate catches real mistakes.
 export default [
-  { ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'annual-cycle-src/**', '**/*.html'] },
+  {
+    ignores: [
+      'dist/**',
+      'dist-lib/**',
+      'storybook-static/**',
+      'coverage/**',
+      'node_modules/**',
+      'annual-cycle-src/**',
+      '**/*.html',
+    ],
+  },
   js.configs.recommended,
   {
     files: ['src/**/*.{js,jsx}'],
@@ -28,6 +38,7 @@ export default [
       'src/build.js',
       '*.config.js',
       'scripts/**/*.js',
+      '.storybook/**/*.js',
     ],
     languageOptions: {
       ecmaVersion: 2023,

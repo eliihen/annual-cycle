@@ -237,6 +237,216 @@ Clicking a task arc in the iframe navigates the top-level frame to your full sit
 
 ---
 
+## Using the React library
+
+The wheel is also published as a React component library on npm, so you can render it inside your own React app instead of (or alongside) the GitHub Pages deployment.
+
+```bash
+npm install @eliihen/annual-cycle
+```
+
+`react` and `react-dom` (v19+) are peer dependencies — you provide them from your own app.
+
+### Render the wheel
+
+The library exports the `Wheel` component and the `processTasks` helper. `Wheel` takes an array of already-processed tasks; `processTasks` turns raw Markdown modules into that array (computing fractional positions, ring assignment, repeat expansion, and category colors).
+
+```jsx
+import { useMemo, useState } from 'react';
+import { Wheel, processTasks } from '@eliihen/annual-cycle';
+
+// Task modules, keyed by path, each shaped `{ frontmatter, html }` —
+// see "Load your own tasks" below for how to produce these.
+import taskModules from './my-tasks.js';
+
+export function AnnualCycle() {
+  const tasks = useMemo(() => processTasks(taskModules), []);
+  const [activeId, setActiveId] = useState(null);
+  return (
+    <Wheel
+      tasks={tasks}
+      activeId={activeId}
+      onTaskClick={setActiveId}
+      year={new Date().getFullYear()}
+    />
+  );
+}
+```
+
+#### `Wheel` props
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `tasks` | array | yes | Tasks already run through `processTasks` |
+| `year` | number | no | Year shown in the hub; drives the "today" highlight. Defaults to no highlight if it isn't the current year |
+| `onTaskClick` | `(id) => void` | no | Called with the clicked task's `id`. Omit for a read-only chart — arcs become inert and drop the pointer cursor; zoom and pan still work |
+| `activeId` | string | no | Id of the task to emphasise. `Wheel` is controlled — it does not track selection itself, so pair this with `onTaskClick` |
+
+### Render the full app
+
+If you want the whole thing — the wheel plus the searchable/filterable sidebar, category legend, and year selector, exactly as deployed to GitHub Pages — the library also exports `AnnualCycleApp`. Unlike `Wheel`, it's uncontrolled: it owns its own selection, search, filter, and year state internally.
+
+```jsx
+import { useMemo } from 'react';
+import { AnnualCycleApp, processTasks } from '@eliihen/annual-cycle';
+import taskModules from './my-tasks.js';
+
+export function MyAnnualCycle() {
+  const tasks = useMemo(() => processTasks(taskModules), []);
+  return <AnnualCycleApp tasks={tasks} />;
+}
+```
+
+#### `AnnualCycleApp` props
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `tasks` | array | yes | Tasks already run through `processTasks` |
+| `initialYear` | number | no | Starting value for the built-in year selector. Defaults to the current year. Read once on mount — changing it on a later render has no effect, since the year is then owned by the component's own state (use `key` to force a remount if you need to reset it) |
+
+The sidebar renders each task's description the same way `Wheel`'s tooltip does: `task.html` as HTML when present, or `task.Body` (a component) when the source has no HTML string to give — see [Rendering task descriptions](#rendering-task-descriptions) below.
+
+### Load your own tasks
+
+`processTasks` expects an object shaped like the output of Vite's [`import.meta.glob`](https://vite.dev/guide/features.html#glob-import) after each Markdown file has been transformed to `{ frontmatter, html }` — the "import on demand based on a configured path" mechanism. The library ships the same Markdown transform it uses internally as a Vite plugin, so you can point it at *your own* tasks directory:
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { markdownPlugin } from '@eliihen/annual-cycle/vite-plugin';
+
+export default defineConfig({
+  plugins: [react(), markdownPlugin()],
+});
+```
+
+```js
+// my-tasks.js — glob your own Markdown files from wherever they live
+export default import.meta.glob('./content/tasks/*.md', { eager: true });
+```
+
+Pass the glob result to `processTasks` directly. It reads either the module object (`{ default: { frontmatter, html } }`) or a bare `{ frontmatter, html }`, so unwrapping to `mod.default` yourself is fine too — as is handing it Markdown modules from another bundler entirely (see [Using the wheel in Docusaurus](#using-the-wheel-in-docusaurus)).
+
+Each `tasks/*.md` file uses the same frontmatter fields documented under [Adding tasks](#adding-tasks). If your build tool isn't Vite, transform each Markdown file into `{ frontmatter, html }` yourself (e.g. with `gray-matter` + `marked`) and hand the resulting map to `processTasks` — see [Using the wheel in Docusaurus](#using-the-wheel-in-docusaurus) for a worked non-Vite example.
+
+> **Folder name matters for task IDs:** `processTasks` derives each task's id by stripping everything up to and including a literal `/tasks/` segment (e.g. `./content/tasks/onboarding.md` → `onboarding`). The leading slash is part of the match, so a key of `tasks/onboarding.md` does *not* match and yields the id `tasks/onboarding` instead. Keep your keys in the form `…/tasks/<name>.md` to get clean ids.
+
+> **Styling:** `Wheel` renders inline SVG and carries no CSS import of its own. Copy the wheel-related rules from [`src/index.css`](src/index.css) (or [`src/iframe.css`](src/iframe.css) for the minimal variant) into your app's stylesheet to match the reference look.
+
+---
+
+## Using the wheel in Docusaurus
+
+You can render the wheel directly inside an `.mdx` doc page. No prebuild step, no Vite plugin, no extra bundler configuration — `processTasks` reads Docusaurus's own Markdown modules directly. Verified end-to-end against a stock `create-docusaurus@latest classic` site (Docusaurus **3.10.2**, React **19.2.8**).
+
+> **The exported Vite plugin does not apply here.** Docusaurus bundles with webpack (or Rspack via `@docusaurus/faster`), not Vite, so `@eliihen/annual-cycle/vite-plugin` and `import.meta.glob` are both unavailable. You don't need them: `processTasks` accepts what Docusaurus's Markdown loader already gives you.
+
+### 1. Install
+
+```bash
+npm install @eliihen/annual-cycle
+```
+
+Docusaurus 3.10 declares `react: ^18 || ^19` and its `classic` template installs React 19, which satisfies this package's `^19.2.7` peer range — no `--legacy-peer-deps` needed.
+
+### 2. Re-export your task Markdown
+
+Put your task Markdown in `src/tasks/` (same frontmatter as [Adding tasks](#adding-tasks)) with an `index.js` that re-exports each file as a namespace:
+
+```js
+// src/tasks/index.js
+export * as boardMeeting from './board-meeting.md';
+export * as securityAudit from './security-audit.md';
+```
+
+That's the whole data layer — plain ESM, no adapter. Each export name becomes the task's id.
+
+<details>
+<summary>Auto-glob the folder instead of listing files</summary>
+
+`require.context` is a webpack/Rspack builtin (no plugin needed), so a barrel that picks up new files automatically is also two lines:
+
+```js
+const ctx = require.context('./', false, /\.md$/);
+export default Object.fromEntries(
+  ctx.keys().map((k) => [k.replace(/^\.\/|\.md$/g, ''), ctx(k)]),
+);
+```
+
+Import it as a default (`import exportedTasks from '@site/src/tasks'`) rather than with `import * as`.
+
+</details>
+
+### 3. Add a wrapper component
+
+`Wheel` is interactive, so it needs state for the selected task. It takes the processed task array — the same thing [`src/App.jsx`](src/App.jsx) passes:
+
+```jsx
+// src/components/AnnualCycle.js
+import React, { useState } from 'react';
+import { Wheel } from '@eliihen/annual-cycle';
+
+export default function AnnualCycle({ tasks, year = new Date().getFullYear() }) {
+  const [activeId, setActiveId] = useState(null);
+  const active = tasks.find((t) => t.id === activeId);
+
+  return (
+    <>
+      <Wheel tasks={tasks} activeId={activeId} onTaskClick={setActiveId} year={year} />
+      {active && (
+        <div className="task-detail">
+          <h3>{active.title}</h3>
+          {active.Body ? <active.Body /> : null}
+        </div>
+      )}
+    </>
+  );
+}
+```
+
+> **`onTaskClick` is optional.** Omit it (along with `activeId`) for a read-only chart — arcs become inert and drop the pointer cursor, while zoom and pan keep working.
+
+### 4. Use it from an `.mdx` file
+
+Rename the page to `.mdx` (Docusaurus only evaluates JSX in `.mdx`, not `.md`), then import and render:
+
+```mdx
+---
+title: Annual cycle
+---
+
+import AnnualCycle from '@site/src/components/AnnualCycle';
+import { processTasks } from '@eliihen/annual-cycle';
+import * as exportedTasks from '@site/src/tasks';
+
+# Our annual cycle
+
+<AnnualCycle year={2026} tasks={processTasks(exportedTasks)} />
+```
+
+`npm run build` prerenders the full SVG into the static HTML, and it hydrates without errors.
+
+### Rendering task descriptions
+
+`processTasks` normalises both Markdown module shapes it may be handed:
+
+| | Vite plugin (this repo) | Docusaurus loader |
+|---|---|---|
+| frontmatter | `default.frontmatter` | top-level `frontMatter` |
+| body | `default.html` (HTML string) | `default` (a React component) |
+
+Whichever you pass, every task comes back with the same fields. The body arrives as `task.html` under Vite and as `task.Body` under Docusaurus — which is an upgrade, not a workaround: rendering the component gives descriptions the full Docusaurus treatment (admonitions, syntax-highlighted code, internal links, registered MDX components), none of which survive an HTML string. `Body` is carried onto expanded repeat instances too, so `--r2`, `--r3`, … render the same description.
+
+### Notes
+
+- **No `<BrowserOnly>` needed.** `Wheel` touches the DOM only inside `useEffect`/event handlers, so it server-renders cleanly and the wheel is present in the prerendered HTML (good for no-JS readers and search indexing). Wrap it in [`<BrowserOnly>`](https://docusaurus.io/docs/docusaurus-core#browseronly) only if you want to skip prerendering deliberately.
+- **The "today" marker is baked in at build time.** `Wheel` highlights the current month/week using `new Date()` during render, so on a statically built site the prerendered highlight reflects the *build* date until hydration corrects it. For a frequently-stale site, rebuild periodically or render inside `<BrowserOnly>`.
+- **Need `task.html` as a string under Docusaurus?** MDX has no HTML string to give, so `html` is empty there. If you need one (for a search index or an export), generate the data with a Node script (`gray-matter` + `marked`, exactly what [the Vite plugin](src/lib/vitePlugin.js) does) and hand that map to `processTasks` instead.
+- **Styling** works the same as any other consumer — see the styling note above; add the rules to `src/css/custom.css`.
+
+---
+
 ## Advanced configuration
 
 All advanced options are optional. The defaults work for standard GitHub Pages setups.
@@ -344,6 +554,33 @@ npm run build     # production build → dist/
 npm run preview   # serve the dist/ build locally
 ```
 
+### Storybook
+
+The components the npm library exports are developed in isolation with Storybook:
+
+```bash
+npm run storybook         # dev server at http://localhost:6006
+npm run build-storybook   # static build → storybook-static/
+```
+
+Stories live next to the component as `src/**/*.stories.jsx`, one file per exported
+component. `Wheel` is covered by eight: `Default` renders this repo's real
+`tasks/*.md`, and the rest exercise one behaviour each — month vs. week precision,
+`repeat` expansion, ring assignment when ranges overlap, category-color resolution,
+the empty state, and `NonInteractive` (no `onTaskClick`). `year` is editable from
+the Controls panel, and arcs are clickable (the story owns `activeId`, since `Wheel`
+is a controlled component).
+
+`AnnualCycleApp` is covered by three: `Default` (real tasks), `Empty`, and
+`MdxDescription`, which supplies a task whose description is a component rather
+than an HTML string — click its arc or card to confirm it renders. Unlike `Wheel`,
+`AnnualCycleApp` owns its own state, so its stories need no external harness.
+
+`.storybook/main.js` reuses the project's own [`markdownPlugin`](src/lib/vitePlugin.js)
+so stories can import real Markdown tasks. It only registers the plugin if it isn't
+already present — Storybook's Vite builder merges `vite.config.js`, which supplies it,
+and running the transform twice would parse the first pass's JS output as Markdown.
+
 ### Debug Slack notification
 
 ```bash
@@ -360,21 +597,33 @@ examples/
   workflows/        ← copy-paste workflow files for consumers
   tasks/            ← example task files
 src/
-  App.jsx           ← main app (wheel + sidebar + filters)
+  App.jsx           ← main app entry — loads tasks/*.md, renders AnnualCycleApp
   IframeApp.jsx     ← iframe-only app (wheel only)
   components/
-    Wheel.jsx       ← SVG wheel with zoom/pan and pinch support
-    TaskCard.jsx    ← collapsible sidebar card
+    Wheel.jsx                 ← SVG wheel with zoom/pan and pinch support
+    Wheel.stories.jsx         ← Storybook stories for the exported Wheel component
+    AnnualCycleApp.jsx        ← wheel + sidebar + filters, exported as-is to consumers
+    AnnualCycleApp.stories.jsx ← Storybook stories for the exported AnnualCycleApp
+    TaskCard.jsx              ← collapsible sidebar card (used by AnnualCycleApp)
+  lib/
+    index.js        ← npm library entry — exports Wheel, AnnualCycleApp, processTasks
+    vitePlugin.js   ← shared Markdown→JSON Vite plugin (also exported to consumers)
   utils/
     tasks.js        ← task loading, ring assignment, category colors
   notify.js         ← Slack notification script (Node.js, no build step)
   index.css         ← main app styles
   iframe.css        ← iframe-only styles
 vite.config.js      ← Vite config with Markdown plugin and multi-page build
+vite.iframe.config.js ← iframe-only build (wheel with no chrome)
+vite.lib.config.js  ← library build → dist-lib/ (ESM + CJS, React externalized)
+.storybook/
+  main.js           ← Storybook config (reuses the project's Markdown plugin)
+  preview.js        ← loads src/index.css so the wheel is styled in the canvas
 .github/
   workflows/
     deploy-demo.yml          ← deploys this repo's own demo to GitHub Pages
     notify-slack-demo.yml    ← sends Slack notifications for this repo's own demo
+    publish-npm.yml          ← publishes the library to npm on GitHub Release
   actions/
     build/action.yml         ← composite action for consumers — build only
     deploy/action.yml        ← composite action for consumers — deploy a build's dist_path

@@ -452,13 +452,23 @@ export default function Wheel({ tasks, activeId, onTaskClick, year }) {
             else if (labelRot < -90) labelRot += 180;
 
             return (
-              <g key={task.id} onClick={() => onTaskClick(task.id)} style={{ cursor: 'pointer' }}>
+              // onTaskClick is optional: without it the wheel is a read-only
+              // chart, so don't offer a pointer cursor it can't act on.
+              <g
+                key={task.id}
+                onClick={onTaskClick ? () => onTaskClick(task.id) : undefined}
+                style={onTaskClick ? { cursor: 'pointer' } : undefined}
+              >
                 <path
                   d={d} fill={color} stroke="white" strokeWidth="1"
                   opacity={isActive ? 1 : 0.88}
                   className={`task-arc${isActive ? ' active' : ''}`}
                 >
-                  <title>{task.title} ({rangeLabel})</title>
+                  {/* Single template string, not adjacent JSX children: React 19
+                      requires <title> children to be one string and silently drops
+                      the content during SSR otherwise, causing a hydration mismatch
+                      in server-rendered consumers (Docusaurus, Next.js, …). */}
+                  <title>{`${task.title} (${rangeLabel})`}</title>
                 </path>
                 {useCurved && (
                   <>

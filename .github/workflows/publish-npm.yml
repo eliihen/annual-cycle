@@ -1,12 +1,15 @@
-name: CI
+name: Publish to npm
 
 on:
-  pull_request:
-  push:
-    branches: [main]
+  release:
+    types: [published]
+
+permissions:
+  contents: read
 
 jobs:
-  test:
+  publish:
+    if: false # disabled for now
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,18 +20,21 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
+      - name: Test
         run: npm test
 
       - name: Lint
         run: npm run lint
 
-      - name: Build
-        run: npm run build
-
       - name: Build library
         run: npm run build:lib
+
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
