@@ -24,10 +24,13 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-08-06 — Merged `main` into PR #31 to resolve merge conflicts (main had advanced through many dependency bumps: `marked` 18.0.6→18.0.9, `@vitejs/plugin-react` 6.0.4→6.0.5, `eslint` 10.7.0→10.8.0, `globals` 17.7.0→17.8.0, `vite` 8.1.5→8.2.0, `react-dom` 19.2.7→19.2.8, plus the brace-expansion/postcss `npm audit fix`). Conflicts were in `package.json` (kept this branch's library structure — `peerDependencies`, `react`/`react-dom` in `devDependencies`, Storybook scripts/deps — while taking main's newer version ranges), `package-lock.json` (regenerated via `npm install` against the merged `package.json` rather than hand-merged), and `LOOP_STATE.md` (both sides' backlog entries kept — adjacent insertions, not a real conflict). Verified with a clean `npm ci`: test 34/34, lint clean, `build` (now on vite 8.2.0), `build:lib`, and `build-storybook` all green, 0 `npm audit` vulnerabilities — branch `claude/issue-15-implementer-verifier-4phr6t`, pushed.
 - 2026-07-23 — Bump `@vitejs/plugin-react` devDependency `^6.0.3` → `^6.0.4` (patch) — branch `loop/bump-vitejs-plugin-react-patch` — PR opened, verifier APPROVE
 - 2026-07-28 — `npm audit fix`: bump `brace-expansion` 5.0.7 → 5.0.8 (transitive dev dep, via eslint→minimatch), resolving high-severity DoS GHSA-mh99-v99m-4gvg — branch `claude/focused-cerf-dhu8jz`, PR #42 — verifier APPROVE, PR opened
+- 2026-08-04 — `npm audit fix`: brace-expansion 5.0.8→5.0.9 (high, DoS bypass) + postcss 8.5.19→8.5.25 (moderate, incomplete fix) — branch `loop/npm-audit-fix-brace-postcss`, PR #49 — verifier APPROVE, merged same day. (This was still listed under "In progress" as of the prior run; corrected here — the work completed and merged 2026-08-04, confirmed via `npm audit` on `main` showing 0 vulnerabilities for both packages.)
+- 2026-08-06 — Issue #15 "Implement a react library as well": PR #31 (branch `claude/issue-15-implementer-verifier-4phr6t`) merged into `main` — GitHub auto-closed issue #15. See the extensive 2026-07-16 through 2026-08-06 entries above for the full implementation history (library export, Docusaurus compat, Storybook, `AnnualCycleApp` export, etc).
+- 2026-08-11 — Scheduled triage run: `npm test` (46/46) and `npm run lint` (0 errors) both green on `main`; no TODO/FIXME markers found in `src/`, `tasks/`, `scripts/`; no failed CI runs since last watermark. Verified three stale Backlog entries are already resolved and removed them (see below). No new auto-fixable items found — the only remaining `npm audit` finding (`js-yaml`/`nanoid`, high) already has an open PR (#52, awaiting human review). Nothing pushed through the explorer/implementer/verifier chain this run.
 
 ## In progress
 
-- 2026-08-04 — `npm audit fix`: brace-expansion 5.0.8→5.0.9 (high, DoS bypass) + postcss 8.5.19→8.5.25 (moderate, incomplete fix) — explorer/implementer/verifier chain running.
+<!-- none currently -->
 
 ## Backlog
 
@@ -36,9 +39,6 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 - 2026-07-07 — Issue #1: No test coverage tooling configured — [needs-human] — superseded by open PR #2 and by the minimal Vitest setup added in `loop/bootstrap`; do not re-file. Close #1 once test tooling lands on `main`.
 - 2026-07-07 — PR #2: "Add Vitest testing and coverage tooling" (branch `claude/awesome-maxwell-5ifjig`) — [needs-human] — awaiting human review/merge; comprehensive suite that supersedes the bootstrap minimal setup.
-- 2026-07-07 — Unused import `categoryColor` in `src/App.jsx:4` (surfaced by new linter) — [auto-fixable] — SELECTED for Phase-7 dry run.
-- 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` (React 19 automatic runtime) — [auto-fixable] — low priority style cleanup; safe to batch.
-- 2026-07-07 — Dep drift (triage `npm outdated`): `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bump; batch after dry run. (`@vitejs/plugin-react` half of this finding shipped separately, see Done.)
 - 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
 - 2026-07-16 — Housekeeping: gitignore `.claude/worktrees/` (the actual path the implementer agent's `isolation: worktree` uses; the existing `.worktrees/` entry didn't match it, tripping the stop hook with untracked files) — [auto-fixable] — done.
 - 2026-07-28 — Issue #15 "Implement a react library as well" — [needs-human] — already has open PR #31 "Implement React library export with reusable Vite plugin" (branch `claude/issue-15-implementer-verifier-4phr6t`) awaiting review; do not re-file.
