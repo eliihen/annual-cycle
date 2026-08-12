@@ -9,6 +9,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 ## Done
 
+- 2026-08-04 — `npm audit fix`: brace-expansion 5.0.8→5.0.9 (high, DoS bypass) + postcss 8.5.19→8.5.25 (moderate, incomplete fix) — branch `loop/npm-audit-fix-brace-postcss`, PR #49 — verifier APPROVE, merged.
 - 2026-07-07 — Bootstrap loop-engineering architecture (skills, agents, hooks, cloud triage workflow, state file) — branch `loop/bootstrap` — in review
 - 2026-07-07 — Dry run: remove unused `categoryColor` import in `src/App.jsx` (surfaced by new linter) — branch `loop/rm-unused-import` — PR opened, verifier APPROVE
 - 2026-07-16 — Issue #15: Implement a React library — extracted the markdown vite plugin to `src/lib/vitePlugin.js` (reusable by a consuming app's own vite config, pointed at their own tasks dir), added `src/lib/index.js` exporting `Wheel` + `processTasks`, and a new `vite.lib.config.js` producing `dist-lib/annual-cycle.{js,cjs}` (ES+CJS, React externalized) with matching `package.json` `main`/`module`/`exports`/`files`/`peerDependencies`/`build:lib` — PR #31 (branch `claude/issue-15-implementer-verifier-4phr6t`) — implementer + verifier pipeline, verifier VERDICT: APPROVE (`npm test` 24/24, `npm run lint` 0 errors, `npm run build` and `npm run build:lib` both pass).
@@ -27,7 +28,7 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 ## In progress
 
-- 2026-08-04 — `npm audit fix`: brace-expansion 5.0.8→5.0.9 (high, DoS bypass) + postcss 8.5.19→8.5.25 (moderate, incomplete fix) — explorer/implementer/verifier chain running.
+_(none)_
 
 ## Backlog
 
@@ -46,3 +47,9 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-07-28 — Redundant open PRs: loop PR #34 (bump marked/react/react-dom, patch) and PR #36 (bump eslint/globals, patch) are superseded by newer Dependabot PRs #37–#41 targeting slightly newer versions of the same packages — [needs-human] — merge/close decision to avoid conflicting bump PRs; not auto-fixable.
 - 2026-08-04 — `npm audit`: new high-severity `brace-expansion` DoS (range 4.0.0–5.0.8, GHSA-rgw5-rvv9-x895, bypasses the CVE-2026-14257 mitigation shipped 2026-07-28) plus moderate `postcss` incomplete-fix (≤8.5.22, GHSA-fxqj-rqcc-2cmp, arbitrary `.map` read when `from` unset) — [auto-fixable] — `npm audit fix` resolves both: brace-expansion 5.0.8→5.0.9 (transitive via eslint→minimatch) and postcss 8.5.19→8.5.25 (transitive via vite); no `.github/actions/*/action.yml` touched.
 - 2026-08-04 — Redundant open PRs: loop PR #44 (bump vite 8.1.5→8.2.0) and PR #45 (bump @vitejs/plugin-react 6.0.4→6.0.5) are duplicated by newer Dependabot PRs #48 and #47 targeting the identical versions; PR #46 (bump globals 17.8.0→17.9.0) has no Dependabot duplicate yet — [needs-human] — merge/close decision to avoid conflicting bump PRs; not auto-fixable.
+- 2026-08-12 — Triage sweep (watermark: 2026-08-06 entry / commit `fbaced6`, PR #31 merged into `main`). CI green on all 30 recent `main` runs, no failures since watermark. No new TODO/FIXME. `npm test` 46/46, `npm run lint` clean. No new backlog items filed — findings below are already tracked or scoped out:
+  - `npm audit`: 2 high (`js-yaml` <3.15.1 GHSA-5p4m-2wfm-xmqj, `nanoid` <3.3.17 GHSA-2v37-7h3g-55p8) — already has open PR #52 "npm audit fix: bump js-yaml and nanoid" (branch `loop/npm-audit-fix-js-yaml-nanoid`), verifier APPROVE per PR body — [needs-human] merge decision; do not re-file.
+  - Issue #18 "Make proper GitHub actions" — still open, already has open PR #32 (branch `claude/issue-18-implementer-verifier-xsxokd`) awaiting review — [needs-human]; do not re-file.
+  - Open Dependabot PRs #53 (vite 8.2.0→8.2.1), #54 (storybook 10.5.6→10.5.7), #55 (@storybook/react-vite 10.5.6→10.5.7) — routine version bumps, out of scope per triage rules (Dependabot already owns these).
+  - `vite build`/`vitest` warning: "ESM syntax in a file loaded as CommonJS" for `vite.config.js`, `vite.iframe.config.js`, `vitest.config.js`, and `src/lib/vitePlugin.js` (no `"type": "module"` in `package.json`; Vite's future-default `configLoader: 'native'` will require it) — [needs-human] — not auto-fixable as scoped: `src/lib/vitePlugin.js` is part of the published library's public surface (documented in the README for consumers' own `vite.config.js`), so renaming it to `.mjs` or flipping the whole repo to `"type": "module"` is an interface-touching change (`src/build.js`, `src/notify.js`, `scripts/hooks/*.js` are CommonJS and would need conversion too). Currently only a deprecation warning, not a build failure.
+  - Backlog entries predating 2026-08-06 for dependency drift (`vite` 8.0.16→8.1.3, `marked` 12.0.2→18.0.5) and redundant bump-PRs #34/#36/#44/#45/#46 are now stale/resolved — all referenced versions have since been bumped past target and all referenced PRs merged or closed per `git log`/current open-PR list. Left in place as historical record per file convention; no action needed.
