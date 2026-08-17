@@ -24,10 +24,12 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 - 2026-08-06 — Merged `main` into PR #31 to resolve merge conflicts (main had advanced through many dependency bumps: `marked` 18.0.6→18.0.9, `@vitejs/plugin-react` 6.0.4→6.0.5, `eslint` 10.7.0→10.8.0, `globals` 17.7.0→17.8.0, `vite` 8.1.5→8.2.0, `react-dom` 19.2.7→19.2.8, plus the brace-expansion/postcss `npm audit fix`). Conflicts were in `package.json` (kept this branch's library structure — `peerDependencies`, `react`/`react-dom` in `devDependencies`, Storybook scripts/deps — while taking main's newer version ranges), `package-lock.json` (regenerated via `npm install` against the merged `package.json` rather than hand-merged), and `LOOP_STATE.md` (both sides' backlog entries kept — adjacent insertions, not a real conflict). Verified with a clean `npm ci`: test 34/34, lint clean, `build` (now on vite 8.2.0), `build:lib`, and `build-storybook` all green, 0 `npm audit` vulnerabilities — branch `claude/issue-15-implementer-verifier-4phr6t`, pushed.
 - 2026-07-23 — Bump `@vitejs/plugin-react` devDependency `^6.0.3` → `^6.0.4` (patch) — branch `loop/bump-vitejs-plugin-react-patch` — PR opened, verifier APPROVE
 - 2026-07-28 — `npm audit fix`: bump `brace-expansion` 5.0.7 → 5.0.8 (transitive dev dep, via eslint→minimatch), resolving high-severity DoS GHSA-mh99-v99m-4gvg — branch `claude/focused-cerf-dhu8jz`, PR #42 — verifier APPROVE, PR opened
+- 2026-08-04 — `npm audit fix`: brace-expansion 5.0.8→5.0.9 (high, DoS bypass) + postcss 8.5.19→8.5.25 (moderate, incomplete fix) — branch `loop/npm-audit-fix-brace-postcss`, PR #49 — verifier APPROVE, merged 2026-08-04.
+- 2026-08-06 — Issue #15 / PR #31 "Implement React library export with reusable Vite plugin" merged into `main` (26 commits, npm library + Storybook + Docusaurus support, see prior entries for full detail) — issue #15 closed as completed.
 
 ## In progress
 
-- 2026-08-04 — `npm audit fix`: brace-expansion 5.0.8→5.0.9 (high, DoS bypass) + postcss 8.5.19→8.5.25 (moderate, incomplete fix) — explorer/implementer/verifier chain running.
+(none — see Backlog for open items awaiting human review/merge)
 
 ## Backlog
 
@@ -36,13 +38,18 @@ Tag each backlog item `[auto-fixable]` or `[needs-human]`.
 
 - 2026-07-07 — Issue #1: No test coverage tooling configured — [needs-human] — superseded by open PR #2 and by the minimal Vitest setup added in `loop/bootstrap`; do not re-file. Close #1 once test tooling lands on `main`.
 - 2026-07-07 — PR #2: "Add Vitest testing and coverage tooling" (branch `claude/awesome-maxwell-5ifjig`) — [needs-human] — awaiting human review/merge; comprehensive suite that supersedes the bootstrap minimal setup.
-- 2026-07-07 — Unused import `categoryColor` in `src/App.jsx:4` (surfaced by new linter) — [auto-fixable] — SELECTED for Phase-7 dry run.
-- 2026-07-07 — Lint warnings: unused `React`/`MAX_RINGS` etc. across `src/**` (React 19 automatic runtime) — [auto-fixable] — low priority style cleanup; safe to batch.
-- 2026-07-07 — Dep drift (triage `npm outdated`): `vite` 8.0.16→8.1.3 (minor) — [auto-fixable] — safe bump; batch after dry run. (`@vitejs/plugin-react` half of this finding shipped separately, see Done.)
-- 2026-07-07 — Dep drift: `marked` 12.0.2→18.0.5 (major) — [needs-human] — major version, breaking-change risk; not auto-fixable.
 - 2026-07-16 — Housekeeping: gitignore `.claude/worktrees/` (the actual path the implementer agent's `isolation: worktree` uses; the existing `.worktrees/` entry didn't match it, tripping the stop hook with untracked files) — [auto-fixable] — done.
-- 2026-07-28 — Issue #15 "Implement a react library as well" — [needs-human] — already has open PR #31 "Implement React library export with reusable Vite plugin" (branch `claude/issue-15-implementer-verifier-4phr6t`) awaiting review; do not re-file.
-- 2026-07-28 — Issue #18 "Make proper GitHub actions" — [needs-human] — already has open PR #32 "Convert build & notify-slack actions to bundled JavaScript" (branch `claude/issue-18-implementer-verifier-xsxokd`) awaiting review; do not re-file.
-- 2026-07-28 — Redundant open PRs: loop PR #34 (bump marked/react/react-dom, patch) and PR #36 (bump eslint/globals, patch) are superseded by newer Dependabot PRs #37–#41 targeting slightly newer versions of the same packages — [needs-human] — merge/close decision to avoid conflicting bump PRs; not auto-fixable.
-- 2026-08-04 — `npm audit`: new high-severity `brace-expansion` DoS (range 4.0.0–5.0.8, GHSA-rgw5-rvv9-x895, bypasses the CVE-2026-14257 mitigation shipped 2026-07-28) plus moderate `postcss` incomplete-fix (≤8.5.22, GHSA-fxqj-rqcc-2cmp, arbitrary `.map` read when `from` unset) — [auto-fixable] — `npm audit fix` resolves both: brace-expansion 5.0.8→5.0.9 (transitive via eslint→minimatch) and postcss 8.5.19→8.5.25 (transitive via vite); no `.github/actions/*/action.yml` touched.
-- 2026-08-04 — Redundant open PRs: loop PR #44 (bump vite 8.1.5→8.2.0) and PR #45 (bump @vitejs/plugin-react 6.0.4→6.0.5) are duplicated by newer Dependabot PRs #48 and #47 targeting the identical versions; PR #46 (bump globals 17.8.0→17.9.0) has no Dependabot duplicate yet — [needs-human] — merge/close decision to avoid conflicting bump PRs; not auto-fixable.
+- 2026-07-28 — Issue #18 "Make proper GitHub actions" — [needs-human] — open PR #32 "Convert build & notify-slack actions to bundled JavaScript" (branch `claude/issue-18-implementer-verifier-xsxokd`) now shows `mergeable_state: dirty` (conflicts with `main`, which has advanced significantly since 2026-07-31) — needs a human/loop rebase decision; not auto-fixable since it touches `.github/actions/*/action.yml` directly (the point of the PR). Do not re-file the underlying issue.
+- 2026-08-10 — PR #52 "npm audit fix: bump js-yaml and nanoid (transitive, high severity)" (branch `loop/npm-audit-fix-js-yaml-nanoid`) — [needs-human] — open, awaiting review/merge; resolves the current `npm audit` findings (js-yaml quadratic-CPU GHSA-5p4m-2wfm-xmqj, nanoid indefinite-loop GHSA-2v37-7h3g-55p8, both high). Confirmed still needed: 2026-08-17 triage reran `npm audit` on `main` and both vulnerabilities are still present pending this PR's merge. Do not re-file.
+- 2026-08-14 — PR #56 "Rename vitest.config.js to vitest.config.mjs" (branch `loop/vitest-config-mjs`) — [needs-human] — open, awaiting review/merge; silences the Vite native-config-loader CommonJS/ESM warning on every `npm test`. Verifier APPROVE already recorded in the PR body. Do not re-file.
+
+<!-- 2026-08-17 triage pass: confirmed CI green on every run back to 2026-07-27 (no failures to file);
+     `npm test` 46/46 and `npm run lint` clean on a fresh `npm ci`; no TODO/FIXME/XXX/HACK markers in
+     src/tasks/scripts. Resolved-and-removed stale entries: unused `categoryColor` import (shipped, see
+     Done), unused-var lint warnings (lint is clean now), vite 8.0.16→8.1.3 dep drift (long superseded,
+     vite is now well past 8.2.0 via later bumps), marked major-version drift (superseded, marked is now
+     ^18.0.9 via incremental Dependabot patches), Issue #15/PR #31 (merged 2026-08-06, see Done), redundant
+     PRs #34/#36 vs #37-#41 and #44/#45/#46 vs #47/#48 (all resolved — the older/redundant PRs were closed
+     unmerged in favor of the Dependabot originals). No new auto-fixable items found; only remaining
+     Backlog items are needs-human (awaiting review/merge, or blocked on conflicts/major-version risk). -->
+
