@@ -614,8 +614,8 @@ src/
   index.css         ← main app styles
   iframe.css        ← iframe-only styles
 vite.config.js      ← Vite config with Markdown plugin and multi-page build
-vite.iframe.config.js ← iframe-only build (wheel with no chrome)
-vite.lib.config.js  ← library build → dist-lib/ (ESM + CJS, React externalized)
+vite.iframe.config.mjs ← iframe-only build (wheel with no chrome)
+vite.lib.config.mjs  ← library build → dist-lib/ (ESM + CJS, React externalized)
 .storybook/
   main.js           ← Storybook config (reuses the project's Markdown plugin)
   preview.js        ← loads src/index.css so the wheel is styled in the canvas
