@@ -37,6 +37,7 @@ export default [
       'src/notify.test.js',
       'src/build.js',
       '*.config.js',
+      '*.config.mjs',
       'scripts/**/*.js',
       '.storybook/**/*.js',
     ],

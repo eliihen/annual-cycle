@@ -21,7 +21,7 @@ bootstrapping the autonomous "loop engineering" architecture, so future runs
 | Purpose | Command | Notes |
 |---|---|---|
 | Dev server | `npm run dev` | Vite, port 5173 |
-| Build | `npm run build` | Dual build: `vite build` + `vite build --config vite.iframe.config.js` |
+| Build | `npm run build` | Dual build: `vite build` + `vite build --config vite.iframe.config.mjs` |
 | Preview | `npm run preview` | Serves `dist/` |
 | Test | `npm test` | **Added in this bootstrap** — `vitest run` |
 | Test (watch) | `npm run test:watch` | **Added** |

@@ -19,9 +19,9 @@ code; if code and this file disagree, the code wins — fix this file.
 - Two builds from one source (the "dual build"):
   - `index.html` → full app (`src/main.jsx` → `src/App.jsx`).
   - `iframe.html` → embeddable build (`src/iframe.jsx` → `src/IframeApp.jsx`),
-    built with `vite.iframe.config.js`. The iframe link target is baked in at
+    built with `vite.iframe.config.mjs`. The iframe link target is baked in at
     build time via `__IFRAME_LINK_TARGET__` (env `IFRAME_LINK_TARGET`).
-- `npm run build` runs **both** (`vite build && vite build --config vite.iframe.config.js`).
+- `npm run build` runs **both** (`vite build && vite build --config vite.iframe.config.mjs`).
   A change that builds the main app but breaks the iframe build is still broken.
 
 ## Data model — `tasks/*.md`
